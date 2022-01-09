@@ -10,4 +10,4 @@ Usage:
   - (it's also possible to configure the length of the list, the length of chunks and the number of schedulers used)
 
 # acknowledgements
-The stream skeletons are taken and then modified from the ParaPhrase/skel software, whilst the data parallel skeletons are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.
+The stream skeletons ("stream.erl" and "sstream.erl") are taken and then modified from the ParaPhrase/skel software, whilst the data parallel skeletons ("gmapred.erl" and "pmap.erl") are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.
