@@ -8,7 +8,7 @@
 %
 % usage example:
 % List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].
-% stream:start_farm(fun lists:sort/1,List,2000). 
+% stream:start_farm(fun lists:sort/1,List). 
 % expected output:
 % [[6,6,6,6,7],[1],[4,231,1231],[3,12,45231]]
 start_farm(W_func,Input_list) ->
@@ -23,8 +23,8 @@ start_farm(W_func,Input_list,W) ->
 %
 % usage example:
 % List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].
-% M_func = fun(Chunk) -> [X*X || X<-Chunk] end.
-% stream:start_farm([M_func, fun lists:sort/1],List). 
+% Func = fun(Chunk) -> [X*X || X<-Chunk] end.
+% stream:start_pipe([Func, fun lists:sort/1],List). 
 % expected output:
 % [[9,144,2045843361],[16,53361,1515361],[1],[36,36,36,36,49]]
 start_pipe (Stages,Input_list) ->
