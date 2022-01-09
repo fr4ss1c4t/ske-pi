@@ -37,10 +37,18 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    %                 fun mapper/3, fun reducer/3))) end,
 
    % sequential version of google map reduce
-   Seq = fun() -> lists:sum(lists:map(fun lists:sum/1,lists:map(M_func, utils:make_chunks(List,Chunks_len)))) end,
+   Seq = fun() -> 
+               lists:sum(
+                 lists:map(
+                   fun lists:sum/1,lists:map(
+                                     M_func, utils:make_chunks(List,Chunks_len)))) end,
 
-   % parallel composite version
-   P_mapred = fun() -> lists:sum(preduce:start(fun lists:sum/1, pmap:start(M_func,  utils:make_chunks(List,Chunks_len)))) end,
+   % parallel version
+   P_mapred = fun() -> 
+                    lists:sum(
+                         pmapred:start(
+                           utils:make_chunks(List,Chunks_len), 
+                           fun(Chunk)->[X*X||X<-Chunk] end,fun lists:sum/1)) end,
 
    Time_seq = test_loop(10,Seq, []),
    Mean_seq = mean(Time_seq),
@@ -60,11 +68,11 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    %io:format("google version is"), 
    %io:format(" ~wms, whilst median is ~wms~n",
    %          [Mean_g/1000,Median_g/1000]),
-   io:format("composite version mean is"), 
+   io:format("parallel version mean is"), 
    io:format(" ~wms, whilst median is ~wms~n",
              [Mean_p/1000,Median_p/1000]),
    %io:format("speed up of google version is ~w~n", [Speedup1]),
-   io:format("speed up of composite vers. is ~w~n", [Speedup2]).
+   io:format("speed up of parallel version is ~w~n", [Speedup2]).
 
 test_loop(0,_Fun, Times) ->
    Times;
