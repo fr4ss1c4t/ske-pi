@@ -15,20 +15,18 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    erlang:system_flag(schedulers_online,Schedulers_num),
    List = [rand:uniform(100)|| 
            _ <- lists:seq(0,round(math:pow(2,Exp)))],
-   if
-      Exp>Chunks_exp ->
-         Chunks_len = round(math:pow(2,Chunks_exp));
-      true ->
-         Chunks_len = 1
-   end,
-   
-   io:format("testing with ~w scheduler(s)~n", [Schedulers_num]),
-   io:format("2^~w chunks of length 2^~w=~w~n",
-	     [Exp-Chunks_exp,Chunks_exp, Chunks_len]),
 
-   %M_func = fun(Input) -> 
-   %               [1 + math:pow(math:sin(X),Exp) || X <- Input] 
-   %         end,
+   io:format("testing with ~w scheduler(s)~n", [Schedulers_num]),
+     if
+      Exp>Chunks_exp ->
+         Chunks_len = round(math:pow(2,Chunks_exp)),
+         io:format("2^~w chunks of length 2^~w=~w~n",
+	         [Exp-Chunks_exp, Chunks_exp,Chunks_len]);
+      true ->
+         Chunks_len = round(math:pow(2,Exp)),
+         io:format("2^~w chunks of length 2^~w=~w~n",
+	         [0, Exp,Chunks_len])
+   end,
    
    % google map reduce
    %Hashed_chunks = lists:map(fun(Chunk) -> 

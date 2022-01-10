@@ -15,12 +15,24 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
    erlang:system_flag(schedulers_online,Schedulers_num),
    List = [rand:uniform(100)|| 
            _ <- lists:seq(0,round(math:pow(2,Exp)))],
+
    
    io:format("testing with ~w scheduler(s) and ~w worker(s)~n", 
              [Schedulers_num,W]),
-   io:format("2^~w chunks of length 2^~w=~w~n",
-	     [Exp-Chunks_exp, Chunks_exp,Chunks_len]),
+   if
+      Exp>Chunks_exp ->
+         Chunks_len = round(math:pow(2,Chunks_exp)),
+         io:format("2^~w chunks of length 2^~w=~w~n",
+	         [Exp-Chunks_exp, Chunks_exp,Chunks_len]);
+      true ->
+         Chunks_len = round(math:pow(2,Exp)),
+         io:format("2^~w chunks of length 2^~w=~w~n",
+	         [0, Exp,Chunks_len])
+   end,
 
+   M_func = fun(Input) -> 
+                  [1 + math:sin(X) || X <- Input] 
+            end,
 
    W_func = fun(Chunks) ->
                   lists:sum(
@@ -39,7 +51,7 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
       fun() -> 
          lists:sum(
             stream:start_pipe(
-               [W_func, fun lists:sum/1], 
+               [M_func, fun lists:sum/1], 
                 utils:make_chunks(List,Chunks_len))) end,
    
    % farm version 
