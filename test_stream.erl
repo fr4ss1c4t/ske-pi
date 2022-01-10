@@ -15,12 +15,6 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
    erlang:system_flag(schedulers_online,Schedulers_num),
    List = [rand:uniform(100)|| 
            _ <- lists:seq(0,round(math:pow(2,Exp)))],
-   if
-      Exp>Chunks_exp ->
-         Chunks_len = round(math:pow(2,Chunks_exp));
-      true ->
-         Chunks_len = 1
-   end,
    
    io:format("testing with ~w scheduler(s) and ~w worker(s)~n", 
              [Schedulers_num,W]),
