@@ -26,41 +26,42 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    io:format("2^~w chunks of length 2^~w=~w~n",
 	     [Exp-Chunks_exp,Chunks_exp, Chunks_len]),
 
-   M_func = fun(Input) -> 
-                  [1 + math:sin(X) || X <- Input] 
-            end,
+   %M_func = fun(Input) -> 
+   %               [1 + math:pow(math:sin(X),Exp) || X <- Input] 
+   %         end,
+   
    % google map reduce
    %Hashed_chunks = lists:map(fun(Chunk) -> 
    %	{erlang:phash2(Chunk),Chunk} end, utils:make_chunks(List,Chunks_len)),
    %G_mapred = 
-   %fun() -> lists:sum(utils:clean_up(gmapred:start(Hashed_chunks, 
+   %   fun() -> lists:sum(utils:clean_up(gmapred:start(Hashed_chunks, 
    %                 fun mapper/3, fun reducer/3))) end,
 
-   % sequential version of google map reduce
+   % sequential version using a fold and a map
    Seq = fun() -> 
-               lists:sum(
-                 lists:map(
-                   fun lists:sum/1,lists:map(
-                                     M_func, utils:make_chunks(List,Chunks_len)))) end,
+         lists:foldl((fun(X,Sum) ->
+            X+Sum end),0,lists:map(fun(X)-> 
+               1 + math:pow(math:sin(X),Exp) end,List)) end,
 
    % parallel version
    P_mapred = fun() -> 
-                    lists:sum(
-                         pmapred:start(
-                           utils:make_chunks(List,Chunks_len), 
-                           fun(Chunk)->[X*X||X<-Chunk] end,fun lists:sum/1)) end,
+                 lists:sum(
+                    pmapred:start(
+                       utils:make_chunks(List,Chunks_len), 
+                       fun(Chunk)->[1+math:pow(math:sin(X),Exp)
+                          ||X<-Chunk] end,fun lists:sum/1)) end,
 
-   Time_seq = test_loop(10,Seq, []),
-   Mean_seq = mean(Time_seq),
-   Median_seq = median(Time_seq),
-   %Time_g = test_loop(10,G_mapred, []),
-   %Mean_g = mean(Time_g),
-   %Median_g = median(Time_g),
-   Time_p = test_loop(10,P_mapred, []),
-   Mean_p = mean(Time_p),
-   Median_p = median(Time_p),
-   %Speedup1 = speedup(Mean_seq,Mean_g),
-   Speedup2 = speedup(Mean_seq,Mean_p),
+   Time_seq = utils:test_loop(10,Seq, []),
+   Mean_seq = utils:mean(Time_seq),
+   Median_seq = utils:median(Time_seq),
+   %Time_g = utils:test_loop(10,G_mapred, []),
+   %Mean_g = utils:mean(Time_g),
+   %Median_g = utils:median(Time_g),
+   Time_p = utils:test_loop(10,P_mapred, []),
+   Mean_p = utils:mean(Time_p),
+   Median_p = utils:median(Time_p),
+   %Speedup1 = utils:speedup(Mean_seq,Mean_g),
+   Speedup2 = utils:speedup(Mean_seq,Mean_p),
 
    io:format("sequential version mean is"),
    io:format(" ~wms, whilst median is ~wms~n",
@@ -74,20 +75,6 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    %io:format("speed up of google version is ~w~n", [Speedup1]),
    io:format("speed up of parallel version is ~w~n", [Speedup2]).
 
-test_loop(0,_Fun, Times) ->
-   Times;
-test_loop(N,Fun,Times) ->
-   {Time,_} = timer:tc(Fun),
-   test_loop(N-1,Fun,[Time|Times]).
-
-mean(List) ->
-   lists:foldl(fun(X,Sum)-> X+Sum end, 0, List) / length(List).
-
-median(List) ->
-  lists:nth(round((length(List) / 2)), lists:sort(List)).
-
-speedup(Time_seq,Time_par) ->
-   Time_seq/Time_par.
 
 mapper(Key,Chunk,Fun) ->
    lists:foreach(fun(X)->Fun(Key,1+math:sin(X)) end,Chunk).

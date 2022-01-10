@@ -25,7 +25,7 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
    io:format("testing with ~w scheduler(s) and ~w worker(s)~n", 
              [Schedulers_num,W]),
    io:format("2^~w chunks of length 2^~w=~w~n",
-	     [Chunks-Chunks_exp, Chunks_exp,Chunks_len]),
+	     [Exp-Chunks_exp, Chunks_exp,Chunks_len]),
 
    M_func = fun(Input) -> 
                   [1 + math:pow(math:sin(X),Exp) 
@@ -36,34 +36,39 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
                      [1 + math:pow(math:sin(X),Exp)
                       || X <- Chunks]) 
             end,
-   Seq = 
-      fun() -> 
-         lists:sum(
-            sstream:start_farm(
-               W_func,
-               utils:make_chunks(List,Chunks_len))) end, 
+
+   % sequential version using a fold and a map
+   Seq = fun() -> 
+         lists:foldl((fun(X,Sum) ->
+            X+Sum end),0,lists:map(fun(X)-> 
+               1 + math:pow(math:sin(X),Exp) end,List)) end,
+   
+   % pipeline version with two stages 
    Pipe =
       fun() -> 
          lists:sum(
             stream:start_pipe(
                [M_func, fun lists:sum/1], 
                 utils:make_chunks(List,Chunks_len))) end,
+   
+   % farm version 
    Farm =
       fun() -> 
          lists:sum(
             stream:start_farm(
                W_func, 
                utils:make_chunks(List,Chunks_len),W)) end,
-   Time_seq = test_loop(10,Seq, []),
-   Mean_seq = mean(Time_seq),
-   Median_seq = median(Time_seq),
-   Time_pipe = test_loop(10,Pipe, []),
-   Mean_pipe = mean(Time_pipe),
-   Median_pipe = median(Time_pipe),
-   Time_farm = test_loop(10,Farm, []),
-   Mean_farm = mean(Time_farm),
-   Median_farm = median(Time_farm),
-   Speedup = speedup(Mean_seq,Mean_farm),
+
+   Time_seq = utils:test_loop(10,Seq, []),
+   Mean_seq = utils:mean(Time_seq),
+   Median_seq = utils:median(Time_seq),
+   Time_pipe = utils:test_loop(10,Pipe, []),
+   Mean_pipe = utils:mean(Time_pipe),
+   Median_pipe = utils:median(Time_pipe),
+   Time_farm = utils:test_loop(10,Farm, []),
+   Mean_farm = utils:mean(Time_farm),
+   Median_farm = utils:median(Time_farm),
+   Speedup = utils:speedup(Mean_seq,Mean_farm),
 
    io:format("sequential mean is ~wms, whilst median is ~wms~n",
              [Mean_seq/1000,Median_seq/1000]),
@@ -73,17 +78,3 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
              [Mean_farm/1000,Median_farm/1000]),
    io:format("speedup is ~w~n", [Speedup]).
 
-test_loop(0,_Fun, Times) ->
-   Times;
-test_loop(N,Fun,Times) ->
-   {Time,_} = timer:tc(Fun),
-   test_loop(N-1,Fun,[Time|Times]).
-
-mean(List) ->
-   lists:foldl(fun(X,Sum)-> X+Sum end, 0, List) / length(List).
-
-median(List) ->
-  lists:nth(round((length(List) / 2)), lists:sort(List)).
-
-speedup(Time_seq,Time_par) ->
-   Time_seq/Time_par.
