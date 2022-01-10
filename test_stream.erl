@@ -27,10 +27,7 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
    io:format("2^~w chunks of length 2^~w=~w~n",
 	     [Exp-Chunks_exp, Chunks_exp,Chunks_len]),
 
-   M_func = fun(Input) -> 
-                  [1 + math:pow(math:sin(X),Exp) 
-                   || X <- Input] 
-            end,
+
    W_func = fun(Chunks) ->
                   lists:sum(
                      [1 + math:pow(math:sin(X),Exp)
@@ -48,7 +45,7 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
       fun() -> 
          lists:sum(
             stream:start_pipe(
-               [M_func, fun lists:sum/1], 
+               [W_func, fun lists:sum/1], 
                 utils:make_chunks(List,Chunks_len))) end,
    
    % farm version 
