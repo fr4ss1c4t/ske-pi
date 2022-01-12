@@ -5,16 +5,16 @@
 %%--------------Data Parallel Utils-----------%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% splits the list into chunks of equal length 
+% splits the list into chunks of equal length
 make_chunks(List,Len) ->
-  make_chunks(List,[],0,Len).
+   make_chunks(List,[],0,Len).
 make_chunks([],Acc,_,_) -> Acc;
 make_chunks([Hd|Tl],Acc,Start,Max) when Start==Max ->
    make_chunks(Tl,[[Hd] | Acc],1,Max);
 make_chunks([Hd|Tl],[Hd0 | Tl0],Start,Max) ->
-    make_chunks(Tl,[[Hd | Hd0] | Tl0],Start+1,Max);
+   make_chunks(Tl,[[Hd | Hd0] | Tl0],Start+1,Max);
 make_chunks([Hd|Tl],[],Start,Max) ->
-    make_chunks(Tl,[[Hd]],Start+1,Max).
+   make_chunks(Tl,[[Hd]],Start+1,Max).
 
 % applies the input function N times and puts the
 % results into a list
@@ -37,7 +37,7 @@ clean_up(Result) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%--------Stream Parallel Utils-------------%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % reads from the input stream of chunks of a
 % list and sends them to the first function
@@ -93,7 +93,7 @@ send_results(Results,Pid) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%-------------Testing Utils----------------%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % tests the given function N times and puts the
 % results in a list of time measurements
@@ -110,8 +110,8 @@ mean(List) ->
    lists:foldl(fun(X,Sum)-> X+Sum end, 0, Clean_list) / length(Clean_list).
 
 % takes the median of a list of time measurements
-median(List) -> 
-  lists:nth(round((length(List) / 2)), lists:sort(List)).
+median(List) ->
+lists:nth(round((length(List) / 2)), lists:sort(List)).
 
 % takes the speedup. that is, the improvement in speed
 % between the sequential version and the parallel version

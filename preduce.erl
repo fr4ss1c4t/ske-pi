@@ -1,13 +1,13 @@
 -module (preduce).
 -export([start/2]).
-% takes a function and a list of chunks and sends each chunk 
-% to a reducer process. each reducer applies the user-defined 
-% function to its input and produces a single output, which 
+% takes a function and a list of chunks and sends each chunk
+% to a reducer process. each reducer applies the user-defined
+% function to its input and produces a single output, which
 % is collected into a list (non-ordered)
 %
-% usage example: 
+% usage example:
 % preduce:start(fun lists:sum/1, [[1,2,3],[4,5]]).
-% expected output: 
+% expected output:
 % [9,6]
 start(R_func, List) ->
    S = self(),
@@ -31,10 +31,10 @@ collect(N, List) ->
 
 spawn_procs(Pid, R_func, List) ->
    lists:foreach(
-     fun(I) ->
-           spawn_link(fun() ->
-              do_job(Pid, R_func, I) end)
-    end, List).
+   fun(I) ->
+      spawn_link(fun() ->
+         do_job(Pid, R_func, I) end)
+      end, List).
 
-do_job(Pid, Fun, X) ->
-   Pid ! (catch(Fun(X))).
+   do_job(Pid, Fun, X) ->
+      Pid ! (catch(Fun(X))).
