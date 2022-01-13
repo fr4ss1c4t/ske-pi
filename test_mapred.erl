@@ -43,42 +43,57 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
          X+Sum end),0,lists:map(fun(X)->
             1 + math:pow(math:sin(X),Exp) end,List)) end,
 
-            % parallel version
-            P_mapred = fun() ->
-               lists:sum(
-               pmapred:start(
-               utils:make_chunks(List,Chunks_len),
-               fun(Chunk)->[1+math:pow(math:sin(X),Exp)
-                  ||X<-Chunk] end,fun lists:sum/1)) end,
+   % parallel version
+   P_mapred = fun() ->
+      lists:sum(
+      pmapred:start(
+      utils:make_chunks(List,Chunks_len),
+      fun(Chunk)->[1+math:pow(math:sin(X),Exp)
+         ||X<-Chunk] end,fun lists:sum/1)) end,
 
-                  Time_seq = utils:test_loop(10,Seq, []),
-                  Mean_seq = utils:mean(Time_seq),
-                  Median_seq = utils:median(Time_seq),
-                  %Time_g = utils:test_loop(10,G_mapred, []),
-                  %Mean_g = utils:mean(Time_g),
-                  %Median_g = utils:median(Time_g),
-                  Time_p = utils:test_loop(10,P_mapred, []),
-                  Mean_p = utils:mean(Time_p),
-                  Median_p = utils:median(Time_p),
-                  %Speedup1 = utils:speedup(Mean_seq,Mean_g),
-                  Speedup2 = utils:speedup(Mean_seq,Mean_p),
-
-                  io:format("sequential version mean is"),
-                  io:format(" ~wms, whilst median is ~wms~n",
-                  [Mean_seq/1000,Median_seq/1000]),
-                  %io:format("google version is"),
-                  %io:format(" ~wms, whilst median is ~wms~n",
-                  %          [Mean_g/1000,Median_g/1000]),
-                  io:format("parallel version mean is"),
-                  io:format(" ~wms, whilst median is ~wms~n",
-                  [Mean_p/1000,Median_p/1000]),
-                  %io:format("speed up of google version is ~w~n", [Speedup1]),
-                  io:format("speed up of parallel version is ~w~n", [Speedup2]).
+   % parallel version with pre-partitioned data
+   Chunks = utils:make_chunks(List,Chunks_len),
+   C_mapred = fun() ->
+      lists:sum(
+      pmapred:start(Chunks,
+      fun(Chunk)->[1+math:pow(math:sin(X),Exp)
+         ||X<-Chunk] end,fun lists:sum/1)) end,
 
 
-               mapper(Key,Chunk,Fun) ->
-                  lists:foreach(fun(X)->Fun(Key,1+math:sin(X)) end,Chunk).
+   Time_seq = utils:test_loop(12,Seq, []),
+   Mean_seq = utils:mean(Time_seq),
+   Median_seq = utils:median(Time_seq),
+   %Time_g = utils:test_loop(12,G_mapred, []),
+   %Mean_g = utils:mean(Time_g),
+   %Median_g = utils:median(Time_g),
+   Time_p = utils:test_loop(12,P_mapred, []),
+   Mean_p = utils:mean(Time_p),
+   Median_p = utils:median(Time_p),
+   Time_c = utils:test_loop(12,C_mapred, []),
+   Mean_c = utils:mean(Time_c),
+   Median_c = utils:median(Time_c),
+   Speedup1 = utils:speedup(Mean_seq,Mean_p),
+   Speedup2 = utils:speedup(Mean_seq,Mean_c),
 
-               reducer(Key,Sums,Fun) ->
-                  Results = lists:foldl(fun(Sum,Acc) -> Sum+Acc end,0,Sums),
-                  Fun(Key,Results).
+   io:format("sequential version mean is"),
+   io:format(" ~wms, whilst median is ~wms~n",
+      [Mean_seq/1000,Median_seq/1000]),
+
+   io:format("parallel version mean is"),
+   io:format(" ~wms, whilst median is ~wms~n",
+      [Mean_p/1000,Median_p/1000]),
+
+   io:format("pre-partitioned version is"),
+   io:format(" ~wms, whilst median is ~wms~n",
+             [Mean_c/1000,Median_c/1000]),
+
+   io:format("speed up of parallel version is ~w~n", [Speedup1]),
+   io:format("speed up of pre-partitioned version is ~w~n", [Speedup2]).
+
+
+mapper(Key,Chunk,Fun) ->
+   lists:foreach(fun(X)->Fun(Key,1+math:sin(X)) end,Chunk).
+
+reducer(Key,Sums,Fun) ->
+   Results = lists:foldl(fun(Sum,Acc) -> Sum+Acc end,0,Sums),
+   Fun(Key,Results).
