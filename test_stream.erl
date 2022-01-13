@@ -71,7 +71,8 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
       Time_farm = utils:test_loop(12,Farm, []),
       Mean_farm = utils:mean(Time_farm),
       Median_farm = utils:median(Time_farm),
-      Speedup = utils:speedup(Mean_seq,Mean_farm),
+      Speedup1 = utils:speedup(Mean_seq,Mean_pipe),
+      Speedup2 = utils:speedup(Mean_seq,Mean_farm),
 
       io:format("sequential mean is ~wms, whilst median is ~wms~n",
       [Mean_seq/1000,Median_seq/1000]),
@@ -79,4 +80,5 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
       [Mean_pipe/1000,Median_pipe/1000]),
       io:format("farm mean is ~wms, whilst median is ~wms~n",
       [Mean_farm/1000,Median_farm/1000]),
-      io:format("speedup is ~w~n", [Speedup]).
+      io:format("speeup for pipe is ~w~n",[Speedup1]),
+      io:format("speedup for farm is ~w~n", [Speedup2]).
