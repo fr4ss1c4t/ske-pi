@@ -13,8 +13,8 @@ loop_fun/2,collect/2,emit/1,stop_procs/1]).
 % [[6,6,6,6,7],[1],[4,231,1231],[3,12,45231]]
 start_farm(W_func,Input_list) ->
    W = erlang:system_info(schedulers_online),
-   start_farm(W_func,Input_list,W).
-start_farm(W_func,Input_list,W) ->
+   start_farm(W,W_func,Input_list).
+start_farm(W,W_func,Input_list) ->
    start([{farm, [{seq,W_func}], W}], Input_list).
 
 % takes a list of stages (where each one represents a function)

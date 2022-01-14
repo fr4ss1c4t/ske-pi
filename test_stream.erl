@@ -1,42 +1,44 @@
 -module(test_stream).
 -export([benchmark/0,benchmark/4]).
+-import('math',[sin/1,pow/2,log2/1]).
+
 % testing the pipe and farm skeletons by applying the function
 % fn=1+(sin(X))^Exp, where X is a random number from 0 to 100
 %
 % default configuration
 benchmark() ->
-Schedulers_num = erlang:system_info(schedulers_online),
+Schedulers_num = utils:get_schedulers(),
 Exp = 20,
-Chunks_exp = Exp-round(math:log2(Schedulers_num)),
+Chunks_exp = Exp-round(log2(Schedulers_num)),
 benchmark(Exp,Chunks_exp,Schedulers_num,Schedulers_num).
 % customise length of list, length of chunks, number of workers
 % and schedulers online
 benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
-   erlang:system_flag(schedulers_online,Schedulers_num),
+   utils:set_schedulers(Schedulers_num),
    List = [rand:uniform(100)||
-   _ <- lists:seq(0,round(math:pow(2,Exp)))],
+   _ <- utils:create_list(Exp)],
 
 
    io:format("testing with ~w scheduler(s) and ~w worker(s)~n",
    [Schedulers_num,W]),
    if
       Exp>Chunks_exp ->
-         Chunks_len = round(math:pow(2,Chunks_exp)),
+         Chunks_len = round(pow(2,Chunks_exp)),
          io:format("2^~w chunks of length 2^~w=~w~n",
          [Exp-Chunks_exp, Chunks_exp,Chunks_len]);
       true ->
-         Chunks_len = round(math:pow(2,Exp)),
+         Chunks_len = round(pow(2,Exp)),
          io:format("2^~w chunks of length 2^~w=~w~n",
          [0, Exp,Chunks_len])
    end,
 
    M_func = fun(Input) ->
-      [1 + math:sin(X) || X <- Input]
+      [1 + sin(X) || X <- Input]
    end,
 
    W_func = fun(Chunks) ->
       lists:sum(
-      [1 + math:pow(math:sin(X),Exp)
+      [1 + pow(sin(X),Exp)
       || X <- Chunks])
    end,
 
@@ -44,7 +46,7 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
    Seq = fun() ->
       lists:foldl((fun(X,Sum) ->
          X+Sum end),0,lists:map(fun(X)->
-            1 + math:pow(math:sin(X),Exp) end,List)) end,
+            1 + pow(sin(X),Exp) end,List)) end,
 
    % pipeline version with two stages
    Pipe =
@@ -52,15 +54,15 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
          lists:sum(
          stream:start_pipe(
          [M_func, fun lists:sum/1],
-            utils:make_chunks(List,Chunks_len))) end,
+            utils:make_chunks(Chunks_len,List))) end,
 
    % farm version
    Farm =
    fun() ->
       lists:sum(
       stream:start_farm(
-      W_func,
-      utils:make_chunks(List,Chunks_len),W)) end,
+      W,W_func,
+      utils:make_chunks(Chunks_len,List))) end,
 
       Time_seq = utils:test_loop(12,Seq, []),
       Mean_seq = utils:mean(Time_seq),
@@ -80,5 +82,5 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
       [Mean_pipe/1000,Median_pipe/1000]),
       io:format("farm mean is ~wms, whilst median is ~wms~n",
       [Mean_farm/1000,Median_farm/1000]),
-      io:format("speeup for pipe is ~w~n",[Speedup1]),
+      io:format("speedup for pipe is ~w~n",[Speedup1]),
       io:format("speedup for farm is ~w~n", [Speedup2]).

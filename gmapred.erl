@@ -2,7 +2,7 @@
 -export([start/3]).
 
 % the entry point for the MapReduce framework (the google version)
-start(Input, M_func, R_func) ->
+start(M_func, R_func,Input) ->
    MRPid = self(),
    Pid = spawn(fun () -> reduce(MRPid, M_func, R_func, Input) end),
    receive

@@ -1,29 +1,30 @@
 -module(test_mapred).
 -export([benchmark/0,benchmark/3]).
+-import('math',[sin/1,pow/2,log2/1]).
+
 % testing the mapreduce skeleton by applying the function
 % fn=1+(sin(X))^Exp, where X is a random number from 0 to 100
 %
 % default configuration
 benchmark() ->
-   Schedulers_num = erlang:system_info(schedulers_online),
+   Schedulers_num = utils:get_schedulers(),
    Exp = 20,
-   Chunks_exp = Exp-round(math:log2(Schedulers_num)),
+   Chunks_exp = Exp-round(log2(Schedulers_num)),
    benchmark(Exp,Chunks_exp,Schedulers_num).
 % customise length of list, length of chunks and number of
 % schedulers online
 benchmark(Exp,Chunks_exp,Schedulers_num) ->
-   erlang:system_flag(schedulers_online,Schedulers_num),
-   List = [rand:uniform(100)||
-   _ <- lists:seq(0,round(math:pow(2,Exp)))],
+   utils:set_schedulers(Schedulers_num),
+   List = [rand:uniform(100)|| _ <- utils:create_list(Exp)],
 
    io:format("testing with ~w scheduler(s)~n", [Schedulers_num]),
    if
       Exp>Chunks_exp ->
-         Chunks_len = round(math:pow(2,Chunks_exp)),
+         Chunks_len = round(pow(2,Chunks_exp)),
          io:format("2^~w chunks of length 2^~w=~w~n",
          [Exp-Chunks_exp, Chunks_exp,Chunks_len]);
       true ->
-         Chunks_len = round(math:pow(2,Exp)),
+         Chunks_len = round(pow(2,Exp)),
          io:format("2^~w chunks of length 2^~w=~w~n",
          [0, Exp,Chunks_len])
    end,
@@ -31,33 +32,32 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    % google map reduce
    %Hashed_chunks = lists:map(fun(Chunk) ->
    %	{erlang:phash2(Chunk,Chunks_len),Chunk} end,
-   %  utils:make_chunks(List,Chunks_len)),
+   %  utils:make_chunks(Chunks_len,List)),
 
    %G_mapred =
-   %   fun() -> lists:sum(utils:clean_up(gmapred:start(Hashed_chunks,
-   %                 fun mapper/3, fun reducer/3))) end,
+   %   fun() -> lists:sum(clean_up(gmapred:start(fun mapper/3, fun reducer/3,
+   %                                         Hashed_chunks))) end,
 
    % sequential version using a fold and a map
    Seq = fun() ->
       lists:foldl((fun(X,Sum) ->
          X+Sum end),0,lists:map(fun(X)->
-            1 + math:pow(math:sin(X),Exp) end,List)) end,
+            1 + pow(sin(X),Exp) end,List)) end,
 
    % parallel version
    P_mapred = fun() ->
       lists:sum(
       pmapred:start(
-      utils:make_chunks(List,Chunks_len),
-      fun(Chunk)->[1+math:pow(math:sin(X),Exp)
-         ||X<-Chunk] end,fun lists:sum/1)) end,
+      fun(Chunk)->[1+pow(sin(X),Exp)
+         ||X<-Chunk] end,fun lists:sum/1,utils:make_chunks(Chunks_len,List))) end,
 
    % parallel version with pre-partitioned data
-   Chunks = utils:make_chunks(List,Chunks_len),
+   Chunks = utils:make_chunks(Chunks_len,List),
    C_mapred = fun() ->
       lists:sum(
-      pmapred:start(Chunks,
-      fun(Chunk)->[1+math:pow(math:sin(X),Exp)
-         ||X<-Chunk] end,fun lists:sum/1)) end,
+      pmapred:start(
+      fun(Chunk)->[1+pow(sin(X),Exp)
+         ||X<-Chunk] end,fun lists:sum/1, Chunks)) end,
 
 
    Time_seq = utils:test_loop(12,Seq, []),
@@ -92,7 +92,7 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
 
 
 mapper(Key,Chunk,Fun) ->
-   lists:foreach(fun(X)->Fun(Key,1+math:sin(X)) end,Chunk).
+   lists:foreach(fun(X)->Fun(Key,1+sin(X)) end,Chunk).
 
 reducer(Key,Sums,Fun) ->
    Results = lists:foldl(fun(Sum,Acc) -> Sum+Acc end,0,Sums),

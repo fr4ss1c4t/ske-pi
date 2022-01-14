@@ -6,7 +6,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % splits the list into chunks of equal length
-make_chunks(List,Len) ->
+make_chunks(Len,List) ->
    make_chunks(List,[],0,Len).
 make_chunks([],Acc,_,_) -> Acc;
 make_chunks([Hd|Tl],Acc,Start,Max) when Start==Max ->
@@ -15,11 +15,6 @@ make_chunks([Hd|Tl],[Hd0 | Tl0],Start,Max) ->
    make_chunks(Tl,[[Hd | Hd0] | Tl0],Start+1,Max);
 make_chunks([Hd|Tl],[],Start,Max) ->
    make_chunks(Tl,[[Hd]],Start+1,Max).
-
-% applies the input function N times and puts the
-% results into a list
-apply_n_times(N,Func) ->
-   lists:map(Func, lists:seq(0,N-1)).
 
 % creates a list of all the integers from 0 to (2^Exp - 1)
 create_list(Exp) ->
@@ -117,3 +112,11 @@ lists:nth(round((length(List) / 2)), lists:sort(List)).
 % between the sequential version and the parallel version
 speedup(Time_seq,Time_par) ->
    Time_seq/Time_par.
+
+% sets the number of schedulers online
+set_schedulers(N) ->
+   catch(erlang:system_flag(schedulers_online,N)).
+
+% return the number of schedulers schedulers_online
+get_schedulers() ->
+   erlang:system_info(schedulers_online).

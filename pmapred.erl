@@ -15,7 +15,7 @@
 %                                             fun lists:sum/1)).
 % expected output:
 % 1496
-start(Input, M_func, R_func) ->
+start( M_func, R_func,Input) ->
    MRPid = self(),
    Pid = spawn(fun () -> reduce(MRPid, M_func, R_func, Input) end),
    receive
@@ -60,7 +60,7 @@ spawn_procs(Pid, Fun, Chunk) ->
       spawn_link(fun() ->
          do_job(Pid, Fun, X) end)
       end, Chunk).
-   
+
    % sends Fun(X) to Pid and then terminates
    do_job(Pid, Fun, X) ->
       Pid ! Fun(X).
