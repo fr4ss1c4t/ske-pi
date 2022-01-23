@@ -1,4 +1,4 @@
-# sk-erl
+# SkePi
 Data parallel and stream parallel skeletons implemented in erlang
 
 Usage:
