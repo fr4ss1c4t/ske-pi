@@ -31,11 +31,12 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
 
    % google map reduce
    %Hashed_chunks = lists:map(fun(Chunk) ->
-   %	{erlang:phash2(Chunk,Chunks_len),Chunk} end,
+   %  {erlang:phash2(Chunk,Chunks_len),Chunk} end,
    %  utils:make_chunks(Chunks_len,List)),
 
    %G_mapred =
-   %   fun() -> lists:sum(clean_up(gmapred:start(fun mapper/3, fun reducer/3,
+   %   fun() -> lists:sum(utils:clean_up(
+   %                        gmapred:start(fun mapper/3, fun reducer/3,
    %                                         Hashed_chunks))) end,
 
    % sequential version using a fold and a map
@@ -74,6 +75,7 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    Median_c = utils:median(Time_c),
    Speedup1 = utils:speedup(Mean_seq,Mean_p),
    Speedup2 = utils:speedup(Mean_seq,Mean_c),
+   %Speedup3 = utils:speedup(Mean_seq,Mean_g),
 
    io:format("sequential version mean is"),
    io:format(" ~wms, whilst median is ~wms~n",
@@ -86,14 +88,18 @@ benchmark(Exp,Chunks_exp,Schedulers_num) ->
    io:format("pre-partitioned version is"),
    io:format(" ~wms, whilst median is ~wms~n",
              [Mean_c/1000,Median_c/1000]),
+   %io:format("google map reduce version is"),
+   %io:format(" ~wms, whilst median is ~wms~n",
+   %          [Mean_g/100,Median_g/1000]),
 
    io:format("speed up of parallel version is ~w~n", [Speedup1]),
    io:format("speed up of pre-partitioned version is ~w~n", [Speedup2]).
+   %io:format("speed up of google version is ~w~n", [Speedup3]).
 
 
-mapper(Key,Chunk,Fun) ->
-   lists:foreach(fun(X)->Fun(Key,1+sin(X)) end,Chunk).
+%mapper(Key,Chunk,Fun) ->
+%   lists:foreach(fun(X)->Fun(Key,1+sin(X)) end,Chunk).
 
-reducer(Key,Sums,Fun) ->
-   Results = lists:foldl(fun(Sum,Acc) -> Sum+Acc end,0,Sums),
-   Fun(Key,Results).
+%reducer(Key,Sums,Fun) ->
+%   Results = lists:foldl(fun(Sum,Acc) -> Sum+Acc end,0,Sums),
+%   Fun(Key,Results).
