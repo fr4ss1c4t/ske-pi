@@ -22,12 +22,20 @@ Once you have compiled ske-pi, you may:
 ```
 test_stream:benchmark().
 ```
+<<<<<<< HEAD
 (it's possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests))
+=======
+  - (it's possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests))
+>>>>>>> c69286af56f282f299c3312105fbab9393e9ab2d
 * similarly, you may run the data parallel skeletons. Write:
 ```
 test_mapred:benchmark().
 ```
+<<<<<<< HEAD
 (it's also possible to configure the length of the list, the length of chunks and the number of schedulers used)
+=======
+  - (it's also possible to configure the length of the list, the length of chunks and the number of schedulers used)
+>>>>>>> c69286af56f282f299c3312105fbab9393e9ab2d
 
 ## acknowledgements
 The stream skeleton ("stream.erl") is taken and then modified from the skel library by the ParaPhrase group, whilst the data parallel skeletons ("gmapred.erl" and "pmap.erl") are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.
