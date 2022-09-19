@@ -1,4 +1,4 @@
-SOURCES=utils.erl pmap.erl preduce.erl pmapred.erl gmapred.erl stream.erl test_stream.erl test_mapred.erl
+SOURCES=utils.erl pmap.erl preduce.erl pmapred.erl gmapred.erl stream.erl ./example/test_stream.erl ./example/test_mapred.erl
 OBJECTS=$(SOURCES:.erl=.beam)
 
 ebin:
@@ -8,7 +8,7 @@ ebin:
 	erlc -o ebin $<
 
 .PHONY: all clean
-	
+
 all: $(SOURCES) $(OBJECTS)
 
 clean:

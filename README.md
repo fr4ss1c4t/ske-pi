@@ -12,23 +12,23 @@ All object files can be removed by running the following command from ske-pi's r
 > make clean
 ```
 
-## usage
+## usage examples
 Once you have compiled ske-pi, you may:
 * start the Erlang shell with
 ```
 > cd ebin; erl
 ```
-* test the stream parallel skeletons using the default configuration. Via the Erlang shell, use:
+* test the stream parallel skeletons using an example with a default configuration. Via the Erlang shell, use:
 ```
 > test_stream:benchmark().
 ```
 
-* similarly, you may run the data parallel skeletons. Write:
+* similarly, you may run the data parallel skeletons example. Write:
 ```
 > test_mapred:benchmark().
 ```
-* for the stream parallel skeletons, it is possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests)
-* you may also configure the length of the list, the length of chunks and the number of schedulers used for the data parallel skeletons.
+* for the stream parallel skeletons example, it is possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests)
+* you may also configure the length of the list, the length of chunks and the number of schedulers used for the data parallel skeletons example.
 * the erlang shell may be exited with the following command:
 ```
 > q().
