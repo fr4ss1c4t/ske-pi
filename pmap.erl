@@ -2,7 +2,7 @@
 -export([start/2]).
 % takes a function and a list of chunks and spawns a process
 % for each element in the input list. each mapper process
-% applies the user-defined function to its input and then
+% applies the user-defined function to its input
 % and collects the results (non-ordered)
 %
 % usage example:
