@@ -7,6 +7,8 @@ ebin:
 %.beam: %.erl ebin
 	erlc -o ebin $<
 
+.PHONY: all clean
+	
 all: $(SOURCES) $(OBJECTS)
 
 clean:
