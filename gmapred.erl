@@ -52,8 +52,8 @@ spawn_procs(Pid, Fun, Pairs) ->
    fun({K,V}) ->
       spawn_link(fun() ->
          do_job(Pid, Fun, {K,V}) end)
-      end, Pairs).
+   end, Pairs).
 
-   % sends key-value pairs to Pid and then terminates
-   do_job(Pid, Fun, {K,V}) ->
-      Fun(K,V, fun(K2,V2) -> Pid ! {K2,V2} end).
+% sends key-value pairs to Pid and then terminates
+do_job(Pid, Fun, {K,V}) ->
+   Fun(K,V, fun(K2,V2) -> Pid ! {K2,V2} end).

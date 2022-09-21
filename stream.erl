@@ -8,14 +8,15 @@ loop_fun/2,collect/2,emit/1,stop_procs/1]).
 %
 % usage example:
 % List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].
-% stream:start_farm(fun lists:sort/1,List,2000).
+% W_Fun = fun lists:sort/1.
+% stream:start_farm(W_Fun, List).
 % expected output:
-% [[6,6,6,6,7],[1],[4,231,1231],[3,12,45231]]
-start_farm(W_func,Input_list) ->
+% [[3,12,45231],[4,231,1231],[1],[6,6,6,6,7]]
+start_farm(W_Fun,Input_list) ->
    W = erlang:system_info(schedulers_online),
-   start_farm(W,W_func,Input_list).
-start_farm(W,W_func,Input_list) ->
-   start([{farm, [{seq,W_func}], W}], Input_list).
+   start_farm(W,W_Fun,Input_list).
+start_farm(W,W_Fun,Input_list) ->
+   start([{farm, [{seq,W_Fun}], W}], Input_list).
 
 % takes a list of stages (where each one represents a function)
 % and a stream of chunks of a list. the output of one stage is
@@ -23,8 +24,10 @@ start_farm(W,W_func,Input_list) ->
 %
 % usage example:
 % List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].
-% M_func = fun(Chunk) -> [X*X || X<-Chunk] end.
-% stream:start_farm([M_func, fun lists:sort/1],List).
+% Stage_one = fun(Chunk) -> [X*X || X<-Chunk] end.
+% Stage_two = fun lists:sort/1.
+% Stages = [Stage_one, Stage_two].
+% stream:start_pipe(Stages, List).
 % expected output:
 % [[9,144,2045843361],[16,53361,1515361],[1],[36,36,36,36,49]]
 start_pipe (Stages,Input_list) ->
@@ -84,49 +87,49 @@ loop_fun(Fun,Pid) ->
       {msg,eos} ->
          Pid ! {msg,eos},
          eos
-      end.
+   end.
 
-   % farm paradigm using a collector and an emitter
-   make_farm(W,Workflow) ->
-      fun(Pid) ->
-         Collector = spawn(?MODULE,collect,[W,Pid]),
-         Workers = spawn_procs(W,Workflow,Collector),
-         spawn(?MODULE, emit,[Workers])
-      end.
+% farm paradigm using a collector and an emitter
+make_farm(W,Workflow) ->
+   fun(Pid) ->
+      Collector = spawn(?MODULE,collect,[W,Pid]),
+      Workers = spawn_procs(W,Workflow,Collector),
+      spawn(?MODULE, emit,[Workers])
+   end.
 
-   collect(W,Pid) ->
-      receive
-         {input, _} = Input ->
-            Pid ! Input,
-            collect(W,Pid);
-         {msg,eos} when W =< 1 ->
-            Pid ! {msg, eos};
-         {msg,eos} ->
-            collect(W-1,Pid)
-         end.
+collect(W,Pid) ->
+   receive
+      {input, _} = Input ->
+         Pid ! Input,
+         collect(W,Pid);
+      {msg,eos} when W =< 1 ->
+         Pid ! {msg, eos};
+      {msg,eos} ->
+         collect(W-1,Pid)
+   end.
 
-      emit([Worker|Rest]=Workers) ->
-         receive
-            {input,_} = Input ->
-               Worker ! Input,
-               emit(Rest++[Worker]);
-            {msg, eos} ->
-               stop_procs(Workers)
-            end.
+emit([Worker|Rest]=Workers) ->
+   receive
+      {input,_} = Input ->
+         Worker ! Input,
+         emit(Rest++[Worker]);
+      {msg, eos} ->
+         stop_procs(Workers)
+   end.
 
-         stop_procs([]) ->
-            eos;
-         stop_procs([Worker|Rest])->
-            Worker ! {msg, eos},
-            stop_procs(Rest).
+stop_procs([]) ->
+   eos;
+stop_procs([Worker|Rest])->
+   Worker ! {msg, eos},
+   stop_procs(Rest).
 
-         spawn_procs(W,Workflow,Pid) ->
-            spawn_procs(W,Workflow,Pid,[]).
-         spawn_procs(W,_Workflow,_Pid,Workers) when W <1 ->
-            Workers;
-         spawn_procs(W,Workflow,Pid,Workers) ->
-            Worker = do_job(Workflow,Pid),
-            spawn_procs(W-1,Workflow,Pid,[Worker|Workers]).
+spawn_procs(W,Workflow,Pid) ->
+   spawn_procs(W,Workflow,Pid,[]).
+spawn_procs(W,_Workflow,_Pid,Workers) when W <1 ->
+   Workers;
+spawn_procs(W,Workflow,Pid,Workers) ->
+   Worker = do_job(Workflow,Pid),
+   spawn_procs(W-1,Workflow,Pid,[Worker|Workers]).
 
-         do_job(Workflow,Pid) ->
-            make(Workflow,Pid).
+do_job(Workflow,Pid) ->
+   make(Workflow,Pid).

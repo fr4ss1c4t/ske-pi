@@ -11,17 +11,17 @@
 % exptected output:
 % [[6,6,6,6,7],[1],[4,231,1231],[3,12,45231]]
 
-start(M_func, List) ->
+start(M_Fun, List) ->
    S = self(),
    Tag = erlang:make_ref(),
    lists:foreach(
    fun(I) ->
-      spawn(fun() ->  do_job(S, Tag, M_func, I) end)
+      spawn(fun() ->  do_job(S, Tag, M_Fun, I) end)
    end, List),
    collect(length(List), Tag, []).
 
-do_job(Parent,Tag, M_func, I) ->
-   Parent ! {Tag, catch(M_func(I))}.
+do_job(Parent,Tag, M_Fun, I) ->
+   Parent ! {Tag, catch(M_Fun(I))}.
 
 collect(0,_,List) -> List;
 collect(N,Tag,List) ->

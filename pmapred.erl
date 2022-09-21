@@ -10,12 +10,12 @@
 %
 % example usage:
 % List = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].
-% Chunks = utils:make_chunks(List,4).
-% lists:sum(pmapred:start(Chunks, fun(Chunk)->[X*X||X<-Chunk] end,
-%                                             fun lists:sum/1)).
+% Chunks = utils:make_chunks(4,List).
+% lists:sum(pmapred:start(fun(Chunk)->[X*X||X<-Chunk] end,
+%                         fun lists:sum/1, Chunks)).
 % expected output:
 % 1496
-start( M_func, R_func,Input) ->
+start(M_func, R_func,Input) ->
    MRPid = self(),
    Pid = spawn(fun () -> reduce(MRPid, M_func, R_func, Input) end),
    receive
@@ -59,8 +59,8 @@ spawn_procs(Pid, Fun, Chunk) ->
    fun(X) ->
       spawn_link(fun() ->
          do_job(Pid, Fun, X) end)
-      end, Chunk).
+   end, Chunk).
 
-   % sends Fun(X) to Pid and then terminates
-   do_job(Pid, Fun, X) ->
-      Pid ! Fun(X).
+% sends Fun(X) to Pid and then terminates
+do_job(Pid, Fun, X) ->
+   Pid ! Fun(X).
