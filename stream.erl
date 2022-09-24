@@ -1,35 +1,39 @@
 -module(stream).
 -export([start_farm/2,start_farm/3,start_pipe/2,start_seq/2,
-loop_fun/2,collect/2,emit/1,stop_procs/1]).
-% takes a stream of chunks of a list, the number of workers and
-% the task performed by each worker. the emitter distributes each
-% chunk between the workers and the
-% collector gathers the outputs
-%
-% usage example:
-% List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].
-% W_Fun = fun lists:sort/1.
-% stream:start_farm(W_Fun, List).
-% expected output:
-% [[3,12,45231],[4,231,1231],[1],[6,6,6,6,7]]
+usage/0,loop_fun/2,collect/2,emit/1,stop_procs/1]).
+
+usage() ->
+   io:format("--- stream farm description ---~n",[]),
+   io:format("takes a stream of chunks of a list, the number of workers~n",[]),
+   io:format("and the task performed by each worker. ~n",[]),
+   io:format("the emitter distributes each chunk between the workers ~n",[]),
+   io:format("and the collector gather the final output ~n~n",[]),
+   io:format("usage example:~n",[]),
+   io:format(">List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].~n",[]),
+   io:format(">W_Fun = fun lists:sort/1.~n",[]),
+   io:format(">stream:start_farm(W_Fun, List).~n",[]),
+   io:format("expected output:~n",[]),
+   io:format("[[3,12,45231],[4,231,1231],[1],[6,6,6,6,7]]~n~n",[]),
+
+   io:format("--- stream pipe description ---~n",[]),
+   io:format("takes a stream of chunks of a list and a list of stages~n",[]),
+   io:format("(where each one represents a function). ~n",[]),
+   io:format("the output of one stage is the input of the next one.~n~n",[]),
+   io:format("usage example:~n",[]),
+   io:format(">List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].~n",[]),
+   io:format(">Stage_one = fun(Chunk) -> [X*X || X<-Chunk] end.~n",[]),
+   io:format(">Stage_two = fun lists:sort/1.~n",[]),
+   io:format(">Stages = [Stage_one, Stage_two].~n",[]),
+   io:format(">stream:start_pipe(Stages, List).~n",[]),
+   io:format("expected output:~n",[]),
+   io:format("[[9,144,2045843361],[16,53361,1515361],[1],[36,36,36,36,49]]~n",[]).
+
 start_farm(W_Fun,Input_list) ->
    W = erlang:system_info(schedulers_online),
    start_farm(W,W_Fun,Input_list).
 start_farm(W,W_Fun,Input_list) ->
    start([{farm, [{seq,W_Fun}], W}], Input_list).
 
-% takes a list of stages (where each one represents a function)
-% and a stream of chunks of a list. the output of one stage is
-% the input of the next one
-%
-% usage example:
-% List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].
-% Stage_one = fun(Chunk) -> [X*X || X<-Chunk] end.
-% Stage_two = fun lists:sort/1.
-% Stages = [Stage_one, Stage_two].
-% stream:start_pipe(Stages, List).
-% expected output:
-% [[9,144,2045843361],[16,53361,1515361],[1],[36,36,36,36,49]]
 start_pipe (Stages,Input_list) ->
    start(lists:map(fun(Fun)->
       {seq,Fun}

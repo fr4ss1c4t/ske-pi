@@ -4,7 +4,7 @@
 
 % testing the pipe and farm skeletons by applying the function
 % fn=1+(sin(X))^Exp, where X is a random number from 0 to 100
-%
+
 % default configuration
 benchmark() ->
 Schedulers_num = utils:get_schedulers(),
@@ -33,7 +33,7 @@ benchmark(Exp,Chunks_exp,W,Schedulers_num) ->
    end,
 
    M_func = fun(Input) ->
-      [1 + sin(X) || X <- Input]
+      [1 + pow(sin(X),Exp) || X <- Input]
    end,
 
    W_func = fun(Chunks) ->
