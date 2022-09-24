@@ -13,12 +13,17 @@ All object files can be removed by running the following command from ske-pi's r
 ```
 
 ## usage examples
+Each module has its own usage function printing a brief description and giving a simple usage example.
 Once you have compiled ske-pi, you may:
 * start the Erlang shell with
 ```
 > cd ebin; erl
 ```
-* test the stream parallel skeletons using an example with a default configuration. Via the Erlang shell, use:
+* call the usage function for a given module. Via the Erlang shell, use the following command:
+```
+> <module_name>:usage().
+```
+* additionally, you may test the stream parallel skeletons using an example with a default configuration. Like so:
 ```
 > test_stream:benchmark().
 ```
