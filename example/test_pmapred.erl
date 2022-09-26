@@ -1,4 +1,4 @@
--module(test_mapred).
+-module(test_pmapred).
 -export([benchmark/0,benchmark/3]).
 -import('math',[sin/1,pow/2,log2/1]).
 
@@ -73,5 +73,5 @@ benchmark(Exp,Chunks_Exp,Schedulers_Num) ->
    io:format(" ~wms, whilst median is ~wms~n",
              [Mean_Ch/1000,Median_Ch/1000]),
 
-   io:format("speed up of naive parallel version is ~w~n", [Speedup_Par]),
-   io:format("speed up of pre-partitioned version is ~w~n", [Speedup_Ch]).
+   io:format("speedup of naive parallel version is ~w~n", [Speedup_Par]),
+   io:format("speedup of pre-partitioned version is ~w~n", [Speedup_Ch]).

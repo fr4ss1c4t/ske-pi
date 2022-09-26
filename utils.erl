@@ -31,6 +31,35 @@ clean_up(Result) ->
    Tuples = dict:to_list(Result),
    [ X||{_,[X]}<-Tuples].
 
+% this function is used as a Map function
+make_filter_mapper(MatchWord) ->
+  fun (_Index, FileName, Emit) ->
+    {ok, [Words]} = file:consult(FileName),
+    lists:foreach(fun (Word) ->
+      case MatchWord == Word of
+        true -> Emit(Word, FileName);
+        false -> false
+      end
+    end, Words)
+  end.
+
+% this function is used as a Reduce function
+remove_duplicates(Word, FileNames, Emit) ->
+  UniqueFiles = sets:to_list(sets:from_list(FileNames)),
+  lists:foreach(fun (FileName) -> Emit(Word, FileName) end, UniqueFiles).
+
+%% Auxiliary function to generate {Index, FileName} input
+list_numbered_files(DirName) ->
+  {ok, Files} = file:list_dir(DirName),
+  FullFiles = [ filename:join(DirName, File) || File <- Files ],
+  Indices = lists:seq(1, length(Files)),
+  lists:zip(Indices, FullFiles). % {Index, FileName} tuples
+
+% gets the path containing the test directory
+get_test_dirpath() ->
+   {_,Curpath} = file:get_cwd(),
+   Abspath = filename:dirname(Curpath)++ "/".
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%--------Stream Parallel Utils-------------%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
