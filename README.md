@@ -25,7 +25,7 @@ Once you have compiled ske-pi, you may:
 ```
 > <module_name>:usage().
 ```
-* additionally, you may test the stream parallel skeletons using an example with a default configuration. Like so:
+* additionally, you may test the stream parallel skeletons' performance using an example with a default configuration. Like so:
 ```
 > test_stream:benchmark().
 ```
@@ -34,8 +34,13 @@ Once you have compiled ske-pi, you may:
 ```
 > test_mapred:benchmark().
 ```
+* the above is also available for the skeletons implementing the google mapreduce framework. Try it with:
+```
+> test_googlemapred:benchmark().
+```
 * for the stream parallel skeletons example, it is possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests)
-* you may also configure the length of the list, the length of chunks and the number of schedulers used for the data parallel skeletons example.
+* you may also configure the length of the list, the length of chunks and the number of schedulers used for the data parallel skeletons example
+* for the google mapreduce example, you may input the name of a directory containing your own test files, an atom used to perform an unix grep-like operation on the test files and the number of scherdulers used (please note that the directory with your own test files should be located in ske-pi's top directory and its name should be in string format)
 * the erlang shell may be exited with the following command:
 ```
 > q().

@@ -3,7 +3,7 @@
 -import('math',[sin/1,pow/2,log2/1]).
 
 % testing the pipe and farm skeletons by applying the function
-% fn=1+(sin(X))^Exp, where X is a random number from 0 to 100
+% fn=1+(sin(X))^(10*Exp), where X is a random number from 0 to 100
 
 % default configuration
 benchmark() ->
@@ -34,26 +34,25 @@ benchmark(Exp,Chunks_Exp,W,Schedulers_Num) ->
    end,
 
    Fun = fun(Input) ->
-      [1 + pow(sin(X),Exp) || X <- Input]
+      [1 + pow(sin(X),Exp*10) || X <- Input]
    end,
 
    W_Fun = fun(Chunks) ->
       lists:sum(
-      [1 + pow(sin(X),Exp)
+      [1 + pow(sin(X),Exp*10)
       || X <- Chunks])
    end,
 
    % sequential version is a farm with only one worker
    Seq =
       fun() ->
-         stream:start_farm(1,W_Fun, utils:make_chunks(Chunks_Len,List))
+         stream:start_seq(W_Fun, utils:make_chunks(Chunks_Len,List))
       end,
 
-   % pipeline version with two stages
+   % pipeline version with two stages of farm workers
    Pipe =
       fun() ->
-         stream:start_pipe(
-         [Fun, fun lists:sum/1],
+         stream:start_piped_farm(W,[Fun, fun lists:sum/1],
             utils:make_chunks(Chunks_Len,List))
       end,
 
@@ -65,12 +64,15 @@ benchmark(Exp,Chunks_Exp,W,Schedulers_Num) ->
       end,
 
    Time_Seq = utils:test_loop(12,Seq, []),
+   io:format("SEQ times: ~p~n",[Time_Seq]),
    Mean_Seq = utils:mean(Time_Seq),
    Median_Seq = utils:median(Time_Seq),
    Time_Pipe = utils:test_loop(12,Pipe, []),
+   io:format("PIPED FARM times: ~p~n",[Time_Pipe]),
    Mean_Pipe = utils:mean(Time_Pipe),
    Median_Pipe = utils:median(Time_Pipe),
    Time_Farm = utils:test_loop(12,Farm, []),
+   io:format("FARM times: ~p~n",[Time_Farm]),
    Mean_Farm = utils:mean(Time_Farm),
    Median_Farm = utils:median(Time_Farm),
    Speedup_Pipe = utils:speedup(Mean_Seq,Mean_Pipe),
@@ -78,7 +80,7 @@ benchmark(Exp,Chunks_Exp,W,Schedulers_Num) ->
 
    io:format("sequential mean is ~wms, whilst median is ~wms~n",
    [Mean_Seq/1000,Median_Seq/1000]),
-   io:format("pipe mean is ~wms, whilst median is ~wms~n",
+   io:format("piped farm mean is ~wms, whilst median is ~wms~n",
    [Mean_Pipe/1000,Median_Pipe/1000]),
    io:format("farm mean is ~wms, whilst median is ~wms~n",
    [Mean_Farm/1000,Median_Farm/1000]),

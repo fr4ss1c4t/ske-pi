@@ -1,6 +1,6 @@
 -module(stream).
--export([start_farm/2,start_farm/3,start_pipe/2,start_seq/2,
-usage/0,loop_fun/2,collect/2,emit/1,stop_procs/1]).
+-compile(nowarn_export_all).
+-compile(export_all).
 
 usage() ->
    io:format("--- stream farm description ---~n",[]),
@@ -29,77 +29,93 @@ usage() ->
    io:format("expected output:~n",[]),
    io:format("[[9,144,2045843361],[16,53361,1515361],[1],[36,36,36,36,49]]~n",[]).
 
-start_farm(W_Fun,Input_list) ->
+% some functions to be used in the testing module for starting farms
+% of W workers, pipes with a list of stages and a sequential function
+% operating on a stream of inputs, respectively.
+start_farm(W_Fun,List) ->
    W = erlang:system_info(schedulers_online),
-   start_farm(W,W_Fun,Input_list).
-start_farm(W,W_Fun,Input_list) ->
-   start([{farm, [{seq,W_Fun}], W}], Input_list).
+   start_farm(W,W_Fun,List).
+start_farm(W,W_Fun,List) ->
+   start([{farm, [{seq,W_Fun}], W}], List).
 
-start_pipe (Stages,Input_list) ->
+
+start_pipe(Stages,List) ->
    start(lists:map(fun(Fun)->
       {seq,Fun}
-   end, Stages), Input_list).
+   end, Stages), List).
+
+start_piped_farm(Stages,List) ->
+   W = erlang:system_info(schedulers_online),
+   start_piped_farm(W,Stages,List).
+start_piped_farm(W,Stages,List) ->
+   start(lists:map(fun(Fun)->
+      {farm, [{seq,Fun}], W}
+   end, Stages), List).
+
+start_seq(W_Fun, List) ->
+   start([{seq,W_Fun}],List).
 
 % returns the received results given the input stream and the
-% workflow
-start(Workflow, Input_list) ->
-   run(Workflow,Input_list),
+% tasks
+start(Tasks, List) ->
+   run(Tasks,List),
    receive
       {results,Results} -> Results
    end.
 
-% runs the functions in the workflow given the input stream
-run(Workflow,Input_list) when is_pid(Workflow)->
-   Bin = utils:spawn_src(Input_list),
-   Bin(Workflow);
-run(Workflow,List) when is_list(Workflow) ->
+% runs the tasks in the workflow given the input stream
+run(Tasks,List) when is_pid(Tasks)->
+   Bin = utils:spawn_src(List),
+   Bin(Tasks);
+run(Tasks,List) when is_list(Tasks) ->
    Bin = (utils:spawn_sink())(self()),
-   Parsed_workflow = make(Workflow,Bin),
-   run(Parsed_workflow,List).
+   Parsed_Workflow = make(Tasks,Bin),
+   run(Parsed_Workflow,List).
 
-% parses the workflow
-make(Workflow,Bin) ->
-   Funcs = [parse(Item) || Item <-Workflow],
+% parses the tasks
+make(Tasks,Bin) ->
+   Funcs = [parse(Task) || Task <-Tasks],
    lists:foldr(fun(Func,Pid)-> Func(Pid) end, Bin, Funcs).
 
 parse(Fun) when is_function(Fun,1)->
    parse({seq,Fun});
 parse({seq,Fun}) when is_function(Fun,1)->
    make_seq(Fun);
-parse({farm,Workflow,W}) ->
-   make_farm(W,Workflow);
-parse({pipe,Workflow}) ->
-   make_pipe(Workflow).
+parse({farm,Tasks,W}) ->
+   make_farm(W,Tasks);
+parse({pipe,Tasks}) ->
+   make_pipe(Tasks).
 
-make_pipe(Workflow) ->
+% farm paradigm using a collector and an emitter
+make_farm(W,Tasks) ->
    fun(Pid) ->
-      make(Workflow,Pid)
+      Collector = spawn(?MODULE,collect,[W,Pid]),
+      Workers = spawn_procs(W,Tasks,Collector),
+      spawn(?MODULE, emit,[Workers])
+   end.
+
+make_pipe(Tasks) ->
+   fun(Pid) ->
+      make(Tasks,Pid)
    end.
 
 make_seq(Fun) ->
    fun(Pid) ->
-      spawn(?MODULE,start_seq,[Fun,Pid])
+      spawn(?MODULE,run_seq,[Fun,Pid])
    end.
-start_seq(Seq_fun,Pid) ->
-   Fun = utils:apply(Seq_fun),
+run_seq(Seq_Fun,Pid) ->
+   Fun = utils:apply(Seq_Fun),
    loop_fun(Fun,Pid).
+
 loop_fun(Fun,Pid) ->
    receive
-      {input,_} = Msg_input ->
-         Msg_input1 = Fun(Msg_input),
-         Pid ! Msg_input1,
+      {input,_} = Msg_Input ->
+         Msg_Input1 = Fun(Msg_Input),
+         Pid ! Msg_Input1,
          loop_fun(Fun,Pid);
       {msg,eos} ->
          Pid ! {msg,eos},
          eos
-   end.
-
-% farm paradigm using a collector and an emitter
-make_farm(W,Workflow) ->
-   fun(Pid) ->
-      Collector = spawn(?MODULE,collect,[W,Pid]),
-      Workers = spawn_procs(W,Workflow,Collector),
-      spawn(?MODULE, emit,[Workers])
    end.
 
 collect(W,Pid) ->
@@ -128,13 +144,13 @@ stop_procs([Worker|Rest])->
    Worker ! {msg, eos},
    stop_procs(Rest).
 
-spawn_procs(W,Workflow,Pid) ->
-   spawn_procs(W,Workflow,Pid,[]).
-spawn_procs(W,_Workflow,_Pid,Workers) when W <1 ->
+spawn_procs(W,Tasks,Pid) ->
+   spawn_procs(W,Tasks,Pid,[]).
+spawn_procs(W,_Tasks,_Pid,Workers) when W <1 ->
    Workers;
-spawn_procs(W,Workflow,Pid,Workers) ->
-   Worker = do_job(Workflow,Pid),
-   spawn_procs(W-1,Workflow,Pid,[Worker|Workers]).
+spawn_procs(W,Tasks,Pid,Workers) ->
+   Worker = do_job(Tasks,Pid),
+   spawn_procs(W-1,Tasks,Pid,[Worker|Workers]).
 
-do_job(Workflow,Pid) ->
-   make(Workflow,Pid).
+do_job(Tasks,Pid) ->
+   make(Tasks,Pid).

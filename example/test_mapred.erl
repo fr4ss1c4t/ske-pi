@@ -1,9 +1,9 @@
--module(test_pmapred).
+-module(test_mapred).
 -export([benchmark/0,benchmark/3]).
 -import('math',[sin/1,pow/2,log2/1]).
 
 % testing the mapreduce skeleton by applying the function
-% fn=1+(sin(X))^Exp, where X is a random number from 0 to 100
+% fn=1+(sin(X))^(10*Exp), where X is a random number from 0 to 100
 
 % default configuration
 benchmark() ->
@@ -34,28 +34,31 @@ benchmark(Exp,Chunks_Exp,Schedulers_Num) ->
    Seq = fun() ->
       lists:foldl((fun(X,Sum) ->
          X+Sum end),0,lists:map(fun(X)->
-            1 + pow(sin(X),Exp) end,List)) end,
+            1 + pow(sin(X),Exp*10) end,List)) end,
 
    % parallel version
    P_MapRed = fun() ->
-      pmapred_naive:start(
-      fun(Chunk)->lists:sum([1+pow(sin(X),Exp)||X<-Chunk]) end,
+      mapred_naive:start(
+      fun(Chunk)->lists:sum([1+pow(sin(X),Exp*10)||X<-Chunk]) end,
       utils:make_chunks(Chunks_Len,List)) end,
 
    % parallel version with pre-partitioned data
    Chunks = utils:make_chunks(Chunks_Len,List),
    C_MapRed = fun() ->
-      pmapred_naive:start(
-      fun(Chunk)-> lists:sum([1+pow(sin(X),Exp)||X<-Chunk]) end, Chunks) end,
+      mapred_naive:start(
+      fun(Chunk)-> lists:sum([1+pow(sin(X),Exp*10)||X<-Chunk]) end, Chunks) end,
 
 
    Time_Seq = utils:test_loop(12,Seq, []),
+   io:format("SEQ times: ~p~n",[Time_Seq]),
    Mean_Seq = utils:mean(Time_Seq),
    Median_Seq = utils:median(Time_Seq),
    Time_Par = utils:test_loop(12,P_MapRed, []),
+   io:format("NAIVE MAPREDUCE times: ~p~n",[Time_Par]),
    Mean_Par = utils:mean(Time_Par),
    Median_Par = utils:median(Time_Par),
    Time_Ch = utils:test_loop(12,C_MapRed, []),
+   io:format("SMART MAPREDUCE times: ~p~n",[Time_Ch]),
    Mean_Ch = utils:mean(Time_Ch),
    Median_Ch = utils:median(Time_Ch),
    Speedup_Par = utils:speedup(Mean_Seq,Mean_Par),
@@ -69,9 +72,9 @@ benchmark(Exp,Chunks_Exp,Schedulers_Num) ->
    io:format(" ~wms, whilst median is ~wms~n",
       [Mean_Par/1000,Median_Par/1000]),
 
-   io:format("pre-partitioned version is"),
+   io:format("smart parallel version is"),
    io:format(" ~wms, whilst median is ~wms~n",
              [Mean_Ch/1000,Median_Ch/1000]),
 
    io:format("speedup of naive parallel version is ~w~n", [Speedup_Par]),
-   io:format("speedup of pre-partitioned version is ~w~n", [Speedup_Ch]).
+   io:format("speedup of smart parallel version is ~w~n", [Speedup_Ch]).

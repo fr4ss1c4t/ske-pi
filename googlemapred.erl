@@ -1,8 +1,8 @@
--module(dmapred).
+-module(googlemapred).
 -export([start/3, usage/0]).
 
 usage() ->
-   io:format("--- dmapred description ---~n",[]),
+   io:format("--- googlemapred description ---~n",[]),
    io:format("mapreduce implemented with erlang/otp's dict dictionary ~n",[]),
    io:format("data structure. ~n",[]),
    io:format("takes two user-defined map and reduce functions and a  ~n",[]),
@@ -11,10 +11,10 @@ usage() ->
    io:format("and sends those to the reduce processes. the final  ~n",[]),
    io:format("results are then collected into a single output.~n ~n",[]),
    io:format("usage example:~n",[]),
-   io:format(">IndexedFiles = utils:list_numbered_files(~c<dirpath>~c).~n",[$",$"]),
-   io:format(">M_Fun = utils:make_filter_mapper(<regex>).~n",[]),
-   io:format(">R_Fun = fun utils:remove_duplicates/3.~n",[]),
-   io:format(">dict:find(<regex>, dmapred:start(M_Fun,R_Fun,IndexedFiles)).~n",[]),
+   io:format(">IndexedFiles = utils:index_file_list(~c<dirpath>~c).~n",[$",$"]),
+   io:format(">M_Fun = utils:match_to_file(<regex>).~n",[]),
+   io:format(">R_Fun = fun utils:get_unique/3.~n",[]),
+   io:format(">dict:find(<regex>, googlemapred:start(M_Fun,R_Fun,IndexedFiles)).~n",[]),
    io:format("expected output:~n",[]),
    io:format("{ok, [<filepath(s)-containing-regex>]}~n",[]),
    io:format("NB: <regex> is the erlang atom we are looking for,~n",[]),

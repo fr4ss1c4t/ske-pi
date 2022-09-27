@@ -1,4 +1,4 @@
-SOURCES=utils.erl pmap.erl pmapred_naive.erl dmapred.erl stream.erl ./example/test_googlemapred.erl ./example/test_stream.erl ./example/test_pmapred.erl
+SOURCES=utils.erl pmap.erl mapred_naive.erl googlemapred.erl stream.erl ./example/test_googlemapred.erl ./example/test_stream.erl ./example/test_mapred.erl
 OBJECTS=$(SOURCES:.erl=.beam)
 
 ebin:

@@ -31,34 +31,34 @@ clean_up(Result) ->
    Tuples = dict:to_list(Result),
    [ X||{_,[X]}<-Tuples].
 
-% this function is used as a Map function
-make_filter_mapper(MatchWord) ->
-  fun (_Index, FileName, Emit) ->
-    {ok, [Words]} = file:consult(FileName),
-    lists:foreach(fun (Word) ->
-      case MatchWord == Word of
-        true -> Emit(Word, FileName);
+% the mapper matching atoms with words in each file
+match_to_file(Regex) ->
+  fun (_, File, Fun) ->
+    {ok, [Atoms]} = file:consult(File),
+    lists:foreach(fun (Atom) ->
+      case Regex == Atom of
+        true -> Fun(Atom, File);
         false -> false
       end
-    end, Words)
+    end, Atoms)
   end.
 
-% this function is used as a Reduce function
-remove_duplicates(Word, FileNames, Emit) ->
-  UniqueFiles = sets:to_list(sets:from_list(FileNames)),
-  lists:foreach(fun (FileName) -> Emit(Word, FileName) end, UniqueFiles).
+% the reducer removing duplicate elements
+get_unique(Atom, Files, Fun) ->
+  Unique_Files = sets:to_list(sets:from_list(Files)),
+  lists:foreach(fun (File) -> Fun(Atom, File) end, Unique_Files).
 
-%% Auxiliary function to generate {Index, FileName} input
-list_numbered_files(DirName) ->
-  {ok, Files} = file:list_dir(DirName),
-  FullFiles = [ filename:join(DirName, File) || File <- Files ],
+% indexing all files inside the directory
+index_file_list(Dirpath) ->
+  {ok, Files} = file:list_dir(Dirpath),
+  Filepaths = [ filename:join(Dirpath, File) || File <- Files ],
   Indices = lists:seq(1, length(Files)),
-  lists:zip(Indices, FullFiles). % {Index, FileName} tuples
+  lists:zip(Indices, Filepaths).
 
-% gets the path containing the test directory
+% getting the path containing the test directory
 get_test_dirpath() ->
-   {_,Curpath} = file:get_cwd(),
-   Abspath = filename:dirname(Curpath)++ "/".
+   {_,Currpath} = file:get_cwd(),
+   filename:dirname(Currpath)++ "/".
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%--------Stream Parallel Utils-------------%%
@@ -131,8 +131,8 @@ test_loop(N,Fun,Times) ->
 % takes the mean time of a list of time measurements
 % after removing the worst and best ones
 mean(List) ->
-   Clean_list = tl(lists:reverse(tl(lists:sort(List)))),
-   lists:foldl(fun(X,Sum)-> X+Sum end, 0, Clean_list) / length(Clean_list).
+   Clean_List = tl(lists:reverse(tl(lists:sort(List)))),
+   lists:foldl(fun(X,Sum)-> X+Sum end, 0, Clean_List) / length(Clean_List).
 
 % takes the median of a list of time measurements
 median(List) ->
@@ -140,8 +140,8 @@ lists:nth(round((length(List) / 2)), lists:sort(List)).
 
 % takes the speedup. that is, the improvement in speed
 % between the sequential version and the parallel version
-speedup(Time_seq,Time_par) ->
-   Time_seq/Time_par.
+speedup(Time_Seq,Time_Par) ->
+   Time_Seq/Time_Par.
 
 % sets the number of schedulers online
 set_schedulers(N) ->

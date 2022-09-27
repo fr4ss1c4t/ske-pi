@@ -1,8 +1,8 @@
--module(pmapred_naive).
+-module(mapred_naive).
 -export([start/2, start/4, usage/0]).
 
 usage() ->
-   io:format("--- pmapred_naive description ---~n",[]),
+   io:format("--- mapred_naive description ---~n",[]),
    io:format("takes an user-defined map function and a list of chunks. ~n",[]),
    io:format("it starts as many processes as there are chunks in input, ~n",[]),
    io:format("computes intermediate results and sends those to the  ~n",[]),
@@ -12,14 +12,14 @@ usage() ->
    io:format("with its accumulator) may be specified.~n~n",[]),
    io:format("usage example 1:~n",[]),
    io:format(">M_Fun = fun(Chunk)-> lists:sum([X*X||X<-Chunk]) end.~n",[]),
-   io:format(">pmapred_naive:start(M_Fun, [[1,2,3],[4,5]]).~n",[]),
+   io:format(">mapred_naive:start(M_Fun, [[1,2,3],[4,5]]).~n",[]),
    io:format("expected output:~n",[]),
    io:format("55~n~n"),
 
    io:format("usage example 2:~n",[]),
    io:format(">M_Fun = fun(Chunk)-> [X*X||X<-Chunk] end.~n",[]),
    io:format(">R_Fun = fun(X,Y) -> X++Y end.~n",[]),
-   io:format(">pmapred_naive:start(M_Fun, R_Fun, [[1,2,3],[4,5]], []).~n",[]),
+   io:format(">mapred_naive:start(M_Fun, R_Fun, [[1,2,3],[4,5]], []).~n",[]),
    io:format("expected output:~n",[]),
    io:format("[16,25,1,4,9]~n",[]).
 
