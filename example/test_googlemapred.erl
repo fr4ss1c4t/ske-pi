@@ -1,6 +1,5 @@
 -module(test_googlemapred).
--export([grep/2,benchmark/0, benchmark/2, benchmark/3,
-seq_grep/3, seq_mapred/3]).
+-export([grep/2,benchmark/0, benchmark/2, benchmark/3]).
 
 % takes the name(optional) of a directory containing some test files and/or an
 % atom(optional) to be searched and the numbers of schedulers (optional).

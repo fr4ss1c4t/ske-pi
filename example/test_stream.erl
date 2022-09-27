@@ -84,5 +84,5 @@ benchmark(Exp,Chunks_Exp,W,Schedulers_Num) ->
    [Mean_Pipe/1000,Median_Pipe/1000]),
    io:format("farm mean is ~wms, whilst median is ~wms~n",
    [Mean_Farm/1000,Median_Farm/1000]),
-   io:format("speedup for pipe is ~w~n",[Speedup_Pipe]),
+   io:format("speedup for piped farm is ~w~n",[Speedup_Pipe]),
    io:format("speedup for farm is ~w~n", [Speedup_Farm]).
