@@ -1,4 +1,5 @@
 -module(utils).
+-include("include/defines.hrl").
 -compile(nowarn_export_all).
 -compile(export_all).
 
@@ -150,3 +151,9 @@ set_schedulers(N) ->
 % return the number of schedulers schedulers_online
 get_schedulers() ->
    erlang:system_info(schedulers_online).
+
+% prints a summary
+report(Name, Time, Mean, Median) ->
+   io:format("~p version times: ~p~n",[Name,Time]),
+   io:format("~p version times mean is", [Name]),
+   io:format(" ~pms, whilst times median is ~pms~n",[Mean/?MSEC,Median/?MSEC]).

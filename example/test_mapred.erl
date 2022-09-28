@@ -1,80 +1,71 @@
 -module(test_mapred).
+-include("include/defines.hrl").
 -export([benchmark/0,benchmark/3]).
--import('math',[sin/1,pow/2,log2/1]).
+
 
 % testing the mapreduce skeleton by applying the function
-% fn=1+(sin(X))^(10*Exp), where X is a random number from 0 to 100
+% fn=1+(sin(X))^(10*Exp), where X is a random number from 0 to an upper bound
 
 % default configuration
 benchmark() ->
    Schedulers_Num = utils:get_schedulers(),
-   Exp = 20,
-   Chunks_Exp = Exp-round(log2(Schedulers_Num)),
-   benchmark(Exp,Chunks_Exp,Schedulers_Num).
-% customise length of list, length of chunks and number of
-% schedulers online
-benchmark(Exp,Chunks_Exp,Schedulers_Num) ->
+   Chunks_Exp = ?EXP-round(math:log2(Schedulers_Num)),
+   benchmark(Schedulers_Num, ?EXP, Chunks_Exp).
+% customise number of schedulers online, length of list and length of chunks
+benchmark(Schedulers_Num, Exp, Chunks_Exp) ->
    utils:set_schedulers(Schedulers_Num),
-   List = [rand:uniform(100)|| _ <- utils:create_list(Exp)],
+   List = [rand:uniform(?UPPER)|| _ <- utils:create_list(Exp)],
 
-   io:format("testing with ~w scheduler(s)~n", [Schedulers_Num]),
-   io:format("the list is 2^~w=~w elements long~n",[Exp,length(List)]),
+   io:format("> calculating the function fn=1+(sin(X))^(10*Exp), "),
+   io:format("where EXP=~p and X is a random number from 0 to ~p.~n",
+      [?EXP,?UPPER]),
+   io:format("> testing with ~w scheduler(s).~n", [Schedulers_Num]),
+   io:format("> the list is 2^~w=~w elements long.~n",[Exp,length(List)]),
    if
       Exp>Chunks_Exp ->
-         Chunks_Len = round(pow(2,Chunks_Exp)),
-         io:format("2^~w chunks of length 2^~w=~w~n",
+         Chunks_Len = round(math:pow(2,Chunks_Exp)),
+         io:format("> split into 2^~w chunks of length 2^~w=~w.~n~n",
          [Exp-Chunks_Exp, Chunks_Exp,Chunks_Len]);
       true ->
-         Chunks_Len = round(pow(2,Exp)),
-         io:format("2^~w chunks of length 2^~w=~w~n",
+         Chunks_Len = round(math:pow(2,Exp)),
+         io:format("> split into 2^~w chunks of length 2^~w=~w.~n~n",
          [0, Exp,Chunks_Len])
    end,
+
+   io:format("running tests, please wait...~n~n"),
 
    % sequential version using a fold and a map
    Seq = fun() ->
       lists:foldl((fun(X,Sum) ->
          X+Sum end),0,lists:map(fun(X)->
-            1 + pow(sin(X),Exp*10) end,List)) end,
+            ?COMPUTATION(X,Exp) end,List)) end,
 
-   % parallel version
-   P_MapRed = fun() ->
+   % naive version
+   N_MapRed = fun() ->
       mapred_naive:start(
-      fun(Chunk)->lists:sum([1+pow(sin(X),Exp*10)||X<-Chunk]) end,
-      utils:make_chunks(Chunks_Len,List)) end,
+         fun(Chunk)->lists:sum([?COMPUTATION(X,Exp) || X<-Chunk]) end,
+         utils:make_chunks(Chunks_Len,List)) end,
 
-   % parallel version with pre-partitioned data
-   Chunks = utils:make_chunks(Chunks_Len,List),
-   C_MapRed = fun() ->
+   % smart version
+   S_MapRed = fun() ->
       mapred_naive:start(
-      fun(Chunk)-> lists:sum([1+pow(sin(X),Exp*10)||X<-Chunk]) end, Chunks) end,
+         fun(Chunk)->lists:sum([?COMPUTATION(X,Exp) || X<-Chunk]) end,
+         utils:make_chunks(Chunks_Len,List)) end,
 
-
-   Time_Seq = utils:test_loop(12,Seq, []),
-   io:format("SEQ times: ~p~n",[Time_Seq]),
+   Time_Seq = utils:test_loop(?TIMES,Seq, []),
    Mean_Seq = utils:mean(Time_Seq),
    Median_Seq = utils:median(Time_Seq),
-   Time_Par = utils:test_loop(12,P_MapRed, []),
-   io:format("NAIVE MAPREDUCE times: ~p~n",[Time_Par]),
-   Mean_Par = utils:mean(Time_Par),
-   Median_Par = utils:median(Time_Par),
-   Time_Ch = utils:test_loop(12,C_MapRed, []),
-   io:format("SMART MAPREDUCE times: ~p~n",[Time_Ch]),
-   Mean_Ch = utils:mean(Time_Ch),
-   Median_Ch = utils:median(Time_Ch),
-   Speedup_Par = utils:speedup(Mean_Seq,Mean_Par),
-   Speedup_Ch = utils:speedup(Mean_Seq,Mean_Ch),
-
-   io:format("sequential version mean is"),
-   io:format(" ~wms, whilst median is ~wms~n",
-      [Mean_Seq/1000,Median_Seq/1000]),
-
-   io:format("naive parallel version mean is"),
-   io:format(" ~wms, whilst median is ~wms~n",
-      [Mean_Par/1000,Median_Par/1000]),
-
-   io:format("smart parallel version is"),
-   io:format(" ~wms, whilst median is ~wms~n",
-             [Mean_Ch/1000,Median_Ch/1000]),
-
-   io:format("speedup of naive parallel version is ~w~n", [Speedup_Par]),
-   io:format("speedup of smart parallel version is ~w~n", [Speedup_Ch]).
+   Time_Nv = utils:test_loop(?TIMES,N_MapRed, []),
+   Mean_Nv = utils:mean(Time_Nv),
+   Median_Nv = utils:median(Time_Nv),
+   Time_Sm = utils:test_loop(?TIMES,S_MapRed, []),
+   Mean_Sm = utils:mean(Time_Sm),
+   Median_Sm = utils:median(Time_Sm),
+   Speedup_Nv = utils:speedup(Mean_Seq,Mean_Nv),
+   Speedup_Sm = utils:speedup(Mean_Seq,Mean_Sm),
+   io:format("---SUMMARY OF RESULTS---~n"),
+   utils:report(?SEQ, Time_Seq, Mean_Seq, Median_Seq),
+   utils:report(?NAIVE, Time_Nv, Mean_Nv, Median_Nv),
+   utils:report(?SMART, Time_Sm, Mean_Sm, Median_Sm),
+   io:format("speedup of the ~p version is ~p~n", [?NAIVE,Speedup_Nv]),
+   io:format("speedup of the ~p version is ~p~n", [?SMART,Speedup_Sm]).

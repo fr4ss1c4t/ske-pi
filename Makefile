@@ -1,7 +1,8 @@
 EXAMPLES=example/test_mapred_google.erl example/test_stream.erl example/test_mapred.erl
 SOURCES=utils.erl pmap.erl mapred_naive.erl mapred_google.erl stream.erl $(EXAMPLES)
 OBJECTS=$(SOURCES:.erl=.beam)
-INCLUDES=-I ./include/usages.hrl
+INCLUDES=-I include/usages.hrl -I include/defines.hrl
+
 
 ebin:
 	mkdir ebin

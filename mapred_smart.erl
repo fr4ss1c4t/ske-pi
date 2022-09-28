@@ -1,0 +1,3 @@
+-module(mapred_smart).
+-include("include/usages.hrl").
+-export([start/2, start/4, usage/0]).
