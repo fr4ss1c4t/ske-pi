@@ -1,4 +1,4 @@
--module(test_googlemapred).
+-module(test_mapred_google).
 -export([grep/2,benchmark/0, benchmark/2, benchmark/3]).
 
 % takes the name(optional) of a directory containing some test files and/or an

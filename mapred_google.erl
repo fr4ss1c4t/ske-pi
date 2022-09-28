@@ -1,25 +1,8 @@
--module(googlemapred).
+-module(mapred_google).
+-include("include/usages.hrl").
 -export([start/3, usage/0]).
 
-usage() ->
-   io:format("--- googlemapred description ---~n",[]),
-   io:format("mapreduce implemented with erlang/otp's dict dictionary ~n",[]),
-   io:format("data structure. ~n",[]),
-   io:format("takes two user-defined map and reduce functions and a  ~n",[]),
-   io:format("list of inputs. it starts as many processes as there~n",[]),
-   io:format("elements in the input list, computes intermediate results~n",[]),
-   io:format("and sends those to the reduce processes. the final  ~n",[]),
-   io:format("results are then collected into a single output.~n ~n",[]),
-   io:format("usage example:~n",[]),
-   io:format(">IndexedFiles = utils:index_file_list(~c<dirpath>~c).~n",[$",$"]),
-   io:format(">M_Fun = utils:match_to_file(<regex>).~n",[]),
-   io:format(">R_Fun = fun utils:get_unique/3.~n",[]),
-   io:format(">dict:find(<regex>, googlemapred:start(M_Fun,R_Fun,IndexedFiles)).~n",[]),
-   io:format("expected output:~n",[]),
-   io:format("{ok, [<filepath(s)-containing-regex>]}~n",[]),
-   io:format("NB: <regex> is the erlang atom we are looking for,~n",[]),
-   io:format("~c<dirpath>~c is the string of the path of the directory~n",[$",$"]),
-   io:format("inside of which we are looking.~n").
+usage() -> ?MAPRED_GOOGLE_H.
 
 
 % the entry point for the MapReduce framework (the google version)

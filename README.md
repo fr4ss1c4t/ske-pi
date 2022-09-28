@@ -36,7 +36,7 @@ Once you have compiled ske-pi, you may:
 ```
 * the above is also available for the skeletons implementing the google mapreduce framework. Try it with:
 ```
-> test_googlemapred:benchmark().
+> test_mapred_google:benchmark().
 ```
 * for the stream parallel skeletons example, it is possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests)
 * you may also configure the length of the list, the length of chunks and the number of schedulers used for the data parallel skeletons example
@@ -47,4 +47,4 @@ Once you have compiled ske-pi, you may:
 ```
 
 ## acknowledgements
-The stream skeleton ("stream.erl") is taken and then modified from the skel library by the ParaPhrase group, whilst the data parallel skeletons ("googlemapred.erl" and "pmap.erl") are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.
+The stream skeleton ("stream.erl") is taken and then modified from the skel library by the ParaPhrase group, whilst the data parallel skeletons ("mapred_google.erl" and "pmap.erl") are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.

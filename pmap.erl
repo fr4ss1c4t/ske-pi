@@ -1,17 +1,8 @@
 -module(pmap).
+-include("include/usages.hrl").
 -export([start/2, usage/0]).
 
-usage() ->
-   io:format("--- pmap description ---~n",[]),
-   io:format("takes a function and a list of chunks. ~n",[]),
-   io:format("it spawns a process for each element in the list ~n",[]),
-   io:format("of chunks. each mapper process applies the function ~n",[]),
-   io:format("to its chunk and collects the results (non-ordered)~n~n",[]),
-   io:format("usage example:~n",[]),
-   io:format(">List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].~n",[]),
-   io:format(">pmap:start(fun lists:sort/1, List).~n",[]),
-   io:format("expected output:~n",[]),
-   io:format("[[6,6,6,6,7],[1],[4,231,1231],[3,12,45231]]~n",[]).
+usage() -> ?PMAP_H.
 
 
 start(M_Fun, Chunks) ->

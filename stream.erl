@@ -1,48 +1,9 @@
 -module(stream).
+-include("include/usages.hrl").
 -export([usage/0,start_farm/2,start_seq/2,start_pipe/2,start_piped_farm/2,
-run_seq/2,start_farm/3,start_piped_farm/3]).
+start_farm/3,start_piped_farm/3]).
 
-usage() ->
-   io:format("--- stream farm description ---~n",[]),
-   io:format("takes the number of worker processes (optional),~n",[]),
-   io:format("the task performed by each worker and a stream of chunks~n",[]),
-   io:format("of a list. ~n",[]),
-   io:format("the emitter distributes each chunk between the workers ~n",[]),
-   io:format("and the collector gathers the final output. ~n~n",[]),
-   io:format("usage example:~n",[]),
-   io:format(">List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].~n",[]),
-   io:format(">W_Fun = fun lists:sort/1.~n",[]),
-   io:format(">stream:start_farm(4, W_Fun, List).~n",[]),
-   io:format("expected output:~n",[]),
-   io:format("[[3,12,45231],[4,231,1231],[1],[6,6,6,6,7]]~n~n",[]),
-
-   io:format("--- stream pipe description ---~n",[]),
-   io:format("takes a list of stages(where each one represents a ~n",[]),
-   io:format("function) and a list of chunks. ~n",[]),
-   io:format("the output of one stage is the input of the next one.~n~n",[]),
-   io:format("usage example:~n",[]),
-   io:format(">List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].~n",[]),
-   io:format(">Stage_One = fun(Chunk) -> [X*X || X<-Chunk] end.~n",[]),
-   io:format(">Stage_Two = fun lists:sort/1.~n",[]),
-   io:format(">Stages = [Stage_One, Stage_Two].~n",[]),
-   io:format(">stream:start_pipe(Stages, List).~n",[]),
-   io:format("expected output:~n",[]),
-   io:format("[[9,144,2045843361],[16,53361,1515361],[1],[36,36,36,36,49]]~n~n",[]),
-
-   io:format("--- stream pipe of farms description ---~n",[]),
-   io:format("takes the number of worker processes (optional),~n",[]),
-   io:format("a list of stages(where each one represents a ~n",[]),
-   io:format("function) and a list of chunks. ~n",[]),
-   io:format("each stage is made up of a farm of workers.~n",[]),
-   io:format("the output of one stage is the input of the next one.~n~n",[]),
-   io:format("usage example:~n",[]),
-   io:format(">List = [[12,3,45231],[1231,231,4],[1],[6,6,6,7,6]].~n",[]),
-   io:format(">Stage_One = fun(Chunk) -> [X*X || X<-Chunk] end.~n",[]),
-   io:format(">Stage_Two = fun lists:sum/1.~n",[]),
-   io:format(">Stages = [Stage_One, Stage_Two].~n",[]),
-   io:format(">stream:start_piped_farm(4, Stages, List).~n",[]),
-   io:format("expected output:~n",[]),
-   io:format("[2045843514,1568738,1,193]~n",[]).
+usage() -> ?STREAM_H.
 
 % some functions to be used in the testing module for starting farms
 % of W workers, pipes with a list of stages and a sequential function
