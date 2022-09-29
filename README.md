@@ -1,10 +1,17 @@
 # SkePi
 Data parallel and stream parallel skeletons implemented in erlang.
 
-## compilation and cleanup
-Once you have moved to ske-pi's root directory, you can compile all sources to object code with the following command:
+## compilation, debug and cleanup
+Once you have moved to ske-pi's root directory, you can compile all sources to object code.
+To compile and turn on debug mode, use the following command:
 ```
 > make all
+```
+This will save to a log file information regarding inter-process communication (and timeout if any have occurred), as well as a function calls for each module.
+
+With the following command, you can compile with debug mode off:
+```
+> make all DEBUG=
 ```
 
 All object files can be removed by running the following command from ske-pi's root directory:

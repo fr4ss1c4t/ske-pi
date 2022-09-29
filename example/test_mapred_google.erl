@@ -18,7 +18,7 @@ benchmark(Schedulers_Num, Input) ->
    end.
 benchmark(Schedulers_Num, Atom, Testdir)->
    utils:set_schedulers(Schedulers_Num),
-   Abspath = utils:get_test_dirpath()++Testdir,
+   Abspath = utils:get_dirpath()++Testdir,
    io:format("> testing with ~w scheduler(s).~n", [Schedulers_Num]),
    io:format("> looking for the atom '~w' in the following path:~n",[Atom]),
    io:format("~s~n",[Abspath]),

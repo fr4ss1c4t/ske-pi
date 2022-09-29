@@ -36,8 +36,6 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
 
    io:format("running tests, please wait...~n~n"),
 
-   Chunks =  utils:make_chunks(Chunks_Len,List),
-
    Fun = fun(Input) ->
       [?COMPUTATION(X,Exp) || X <- Input]
    end,
@@ -47,6 +45,8 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
       [?COMPUTATION(X,Exp)
       || X <- Chunks])
    end,
+
+   Chunks =  utils:make_chunks(Chunks_Len,List),
 
    % sequential version is a farm with only one worker
    Seq =
@@ -81,5 +81,5 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
    utils:report(?SEQ, Time_Seq, Mean_Seq, Median_Seq),
    utils:report(?FARM, Time_Farm, Mean_Farm, Median_Farm),
    utils:report(?PIPED_FARM, Time_Pipe, Mean_Pipe, Median_Pipe),
-   io:format("speedup for the ~p is ~w~n",[?FARM,Speedup_Pipe]),
-   io:format("speedup for the ~p is ~w~n", [?PIPED_FARM,Speedup_Farm]).
+   io:format("speedup for the ~p is ~w~n",[?PIPED_FARM,Speedup_Pipe]),
+   io:format("speedup for the ~p is ~w~n", [?FARM,Speedup_Farm]).

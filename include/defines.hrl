@@ -8,17 +8,23 @@
 % this is an upperbound, to be used when generating random numbers
 -define(UPPER, 100).
 
-% this is the number of times test are run, to
+% this is the number of times test are run, to be used in test_loop()
 -define(TIMES, 12).
+
+% default timeout in milliseconds
+-define(TIMEOUT, (10)).
 
 % to be used whe converting to milliseconds
 -define(MSEC, 1000).
 
-% the atom to be search in the google mapreduce tests
+% the default atom, to be searched in the google mapreduce tests
 -define(REGEX, (skepi)).
 
-% default directory, to be used in the google mapreduce tests
+% the default directory, to be used in the google mapreduce tests
 -define(TESTDIR, ("test")).
+
+% time and date, to be used in debug mode showing inter-process communication
+-define(NOW, (utils:print_time())).
 
 % some strings identifying the type of skeleton
 -define(SEQ, ("SEQ")).
@@ -30,9 +36,43 @@
 -define(PIPED_FARM, ("STREAM PIPES OF FARMS")).
 
 
-% for debugging purposes
+% for debugging purposes (on by default), to turn it off, compile with
+% the command 'make DEBUG='
 -ifdef(debug).
--define(LOG(MSG), io:format("{~p,~p}: ~p~n", [?MODULE,?LINE,MSG])).
+-define(LOG_DEFAULT_PATH, ("logs/info.log")).
+-define(GET_DIR, (utils:get_dirpath() ++ ?LOG_DEFAULT_PATH)).
+-define(LOG_PATH, (?GET_DIR)).
+-define(CALL_MSG(At),
+   (io_lib:format("[~s] {MODULE:~p,LINE:~p}: ~p/~p was called~n",
+      [At,?MODULE,?LINE,?FUNCTION_NAME,?FUNCTION_ARITY]))
+).
+-define(LOG_CALL(At), (file:write_file(?LOG_PATH,?CALL_MSG(At),[append]))).
+-define(SENT_MSG(From,To,At),
+   (io_lib:format("[~s] MSG OUT: PID ~p -> PID ~p~n",[At,From,To]))
+).
+-define(RCVD_MSG(By,From,At),
+   (io_lib:format("[~s] MSG IN: PID ~p <- PID ~p~n",[At,By,From]))
+).
+-define(TIMEOUT_MSG(By,From,At,Timeout),
+   (io_lib:format("[~s] TIMEOUT: PID ~p <- PID ~p timed out after ~pms~n", [At,By,From,Timeout]))
+).
+-define(LOG_SENT(From,To,At),
+   (file:write_file(?LOG_PATH,?SENT_MSG(From,To,At),[append]))
+).
+-define(LOG_RCVD(To,From,At),
+   (file:write_file(?LOG_PATH,?RCVD_MSG(To,From,At),[append]))
+).
+-define(LOG_TIMEOUT(To,From,At,Timeout),
+   (file:write_file(?LOG_PATH,?TIMEOUT_MSG(To,From,At,Timeout),[append]))
+).
 -else.
--define(LOG(MSG), true).
+-define(LOG_PATH, true).
+-define(CALL_MSG(At),true).
+-define(LOG_CALL(At), true).
+-define(SENT_MSG(From,To,At), true).
+-define(RCVD_MSG(To,From,At), true).
+-define(TIMEOUT_MSG(By,From,At,Timeout), true).
+-define(LOG_SENT(From,To,At), true).
+-define(LOG_RCVD(To,From,At), true).
+-define(LOG_TIMEOUT(To,From,At,Timeout), true).
 -endif.

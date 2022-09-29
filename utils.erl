@@ -56,8 +56,8 @@ index_file_list(Dirpath) ->
   Indices = lists:seq(1, length(Files)),
   lists:zip(Indices, Filepaths).
 
-% getting the path containing the test directory
-get_test_dirpath() ->
+% getting the path containing the test/log directory
+get_dirpath() ->
    {_,Currpath} = file:get_cwd(),
    filename:dirname(Currpath)++ "/".
 
@@ -157,3 +157,8 @@ report(Name, Time, Mean, Median) ->
    io:format("~p version times: ~p~n",[Name,Time]),
    io:format("~p version times mean is", [Name]),
    io:format(" ~pms, whilst times median is ~pms~n",[Mean/?MSEC,Median/?MSEC]).
+
+print_time() ->
+    {{Year,Month,Day},{Hour,Min,Sec}} = erlang:localtime(),
+    io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~2.10.0B",
+        [Year, Month, Day, Hour, Min, Sec]).
