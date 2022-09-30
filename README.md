@@ -3,31 +3,21 @@ Data parallel and stream parallel skeletons implemented in erlang.
 
 ## compilation, debug and cleanup
 Once you have moved to ske-pi's root directory, you can compile all sources to object code.
-To compile and turn on debug mode, use the following command:
-```
-> make all
-```
-This will save to a log file information regarding inter-process communication (and timeout if any have occurred), as well as a function calls for each module.
 
-With the following command, you can compile with debug mode off:
-```
-> make all DEBUG=
-```
 
-All object files can be removed by running the following command from ske-pi's root directory:
-```
-> make clean
-```
+` make all ` or ` make ` may be used to compile with debug mode turned on.
+In this mode, some information regarding inter-process communication (and timeouts, if any have occurred), as well as function calls for each module will be saved to a log file (located in "ske-pi/logs/info.log" by default).
+` make all DEBUG= ` or ` make DEBUG= ` will compile with debug mode turned off.
+
+` make clean ` may be used to remove the directory containing all the object files and keep the log files.
+` make cleanall ` will remove both object files and the log files previously generated.
 
 ## usage examples
 Each module has its own usage function printing a brief description and giving a simple usage example.
 
 
 Once you have compiled ske-pi, you may:
-* start the Erlang shell with
-```
-> cd ebin; erl
-```
+* start the Erlang shell with ` cd ebin; erl ` from ske-pi's root directory
 * call the usage function for a given module. Via the Erlang shell, use the following command:
 ```
 > <module_name>:usage().

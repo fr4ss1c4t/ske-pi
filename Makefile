@@ -18,10 +18,13 @@ ebin:
 all: $(SOURCES) $(OBJECTS)
 	mkdir -p logs
 	touch logs/info.log
+	@echo "\nCompilation successful! You may now use SkePi."
 
 clean:
+	@echo "Cleaning up all object files."
 	rm -rf ebin
 
 cleanall:
-	rm -rf ebin
+	@echo "Cleaning up all log files and object files."
 	rm -rf logs
+	rm -rf ebin

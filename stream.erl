@@ -41,11 +41,11 @@ start(Tasks, List) ->
 
 % runs the tasks in the workflow given the input stream
 run(Tasks,List) when is_pid(Tasks)->
-   Bin = utils:spawn_src(List),
-   Bin(Tasks);
+   Bucket = utils:spawn_src(List),
+   Bucket(Tasks);
 run(Tasks,List) when is_list(Tasks) ->
-   Bin = (utils:spawn_sink())(self()),
-   Parsed_Workflow = build(Tasks,Bin),
+   Bucket = (utils:spawn_sink())(self()),
+   Parsed_Workflow = build(Tasks,Bucket),
    run(Parsed_Workflow,List).
 
 run_seq(Seq_Fun,Pid) ->
@@ -53,9 +53,9 @@ run_seq(Seq_Fun,Pid) ->
    loop_fun(Fun,Pid).
 
 % parses the tasks
-build(Tasks,Bin) ->
+build(Tasks,Bucket) ->
    Funcs = [parse(Task) || Task <-Tasks],
-   lists:foldr(fun(Func,Pid)-> Func(Pid) end, Bin, Funcs).
+   lists:foldr(fun(Func,Pid)-> Func(Pid) end, Bucket, Funcs).
 
 parse(Fun) when is_function(Fun,1)->
    parse({seq,Fun});
