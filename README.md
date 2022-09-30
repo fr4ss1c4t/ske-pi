@@ -6,10 +6,13 @@ Once you have moved to ske-pi's root directory, you can compile all sources to o
 
 
 ` make all ` or ` make ` may be used to compile with debug mode turned on.
-In this mode, some information regarding inter-process communication (and timeouts, if any have occurred), as well as function calls for each module will be saved to a log file (located in "ske-pi/logs/info.log" by default).
+
+In this mode, some information regarding inter-process communication (and timeouts, if any have occurred), as well as function calls for each module will be saved to a log file (located in *ske-pi/logs/info.log* by default).
+
 ` make all DEBUG= ` or ` make DEBUG= ` will compile with debug mode turned off.
 
 ` make clean ` may be used to remove the directory containing all the object files and keep the log files.
+
 ` make cleanall ` will remove both object files and the log files previously generated.
 
 ## usage examples
@@ -38,10 +41,7 @@ Once you have compiled ske-pi, you may:
 * for the stream parallel skeletons example, it is possible to configure the length of the list, the length of the chunks onto which the list is split, the number of worker processes and the number of schedulers used (N.B. dependent on the machine used to run the tests)
 * you may also configure the length of the list, the length of chunks and the number of schedulers used for the data parallel skeletons example
 * for the google mapreduce example, you may input the name of a directory containing your own test files, an atom used to perform an unix grep-like operation on the test files and the number of scherdulers used (please note that the directory with your own test files should be located in ske-pi's top directory and its name should be in string format)
-* the erlang shell may be exited with the following command:
-```
-> q().
-```
+* the erlang shell may be exited with the following command: ` q(). `
 
 ## acknowledgements
-The stream skeleton ("stream.erl") is taken and then modified from the skel library by the ParaPhrase group, whilst the data parallel skeletons ("mapred_google.erl" and "pmap.erl") are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.
+The stream skeleton (*stream.erl*) is taken and then modified from the skel library by the ParaPhrase group, whilst the data parallel skeletons (*mapred_google.erl* and *pmap.erl*) are modified versions of Joe Armstrong's examples in his Programming Erlang 2nd ed. book.

@@ -12,14 +12,15 @@ start(M_Fun, List) ->
 
 start(M_Fun, R_Fun, List, Acc) ->
    ?LOG_CALL(?NOW),
+   ?LOG_ERROR(?NOW, ?REASON),
    S = self(),
    Tag = erlang:make_ref(),
    Pid = spawn(fun () -> reduce(S, Tag, M_Fun, R_Fun, List, Acc) end),
+   ?LOG_RCVD(self(),Pid,?NOW),
    receive
       {Pid, Result} -> Result
    after ?TIMEOUT -> (?LOG_TIMEOUT(self(),Pid,?NOW,?TIMEOUT))
-   end,
-   ?LOG_RCVD(self(),Pid,?NOW).
+   end.
 
 reduce(Parent, Tag, M_Fun, R_Fun, List, Acc) ->
    Pid = self(),

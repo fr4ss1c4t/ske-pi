@@ -39,12 +39,13 @@
 % for debugging purposes (on by default), to turn it off, compile with
 % the command 'make DEBUG='
 -ifdef(debug).
+-define(REASON, ('this is just a test')).
 -define(LOG_DEFAULT_PATH, ("logs/info.log")).
 -define(GET_DIR, (utils:get_dirpath() ++ ?LOG_DEFAULT_PATH)).
 -define(LOG_PATH, (?GET_DIR)).
 -define(CALL_MSG(At),
    (io_lib:format("[~s] {MODULE:~p,LINE:~p}: ~p/~p was called~n",
-      [At,?MODULE,?LINE,?FUNCTION_NAME,?FUNCTION_ARITY]))
+      [At,?MODULE,(?LINE)-1,?FUNCTION_NAME,?FUNCTION_ARITY]))
 ).
 -define(LOG_CALL(At), (file:write_file(?LOG_PATH,?CALL_MSG(At),[append]))).
 -define(SENT_MSG(From,To,At),
@@ -56,6 +57,10 @@
 -define(TIMEOUT_MSG(By,From,At,Timeout),
    (io_lib:format("[~s] TIMEOUT: PID ~p <- PID ~p timed out after ~pms~n", [At,By,From,Timeout]))
 ).
+-define(ERROR_MSG(At, Reason),
+   (io_lib:format("[~s] ERROR {MODULE:~p,LINE:~p}: ~p/~p failed! reason:~p~n",
+   [At,?MODULE,(?LINE)-1,?FUNCTION_NAME,?FUNCTION_ARITY,Reason]))
+).
 -define(LOG_SENT(From,To,At),
    (file:write_file(?LOG_PATH,?SENT_MSG(From,To,At),[append]))
 ).
@@ -65,14 +70,22 @@
 -define(LOG_TIMEOUT(To,From,At,Timeout),
    (file:write_file(?LOG_PATH,?TIMEOUT_MSG(To,From,At,Timeout),[append]))
 ).
+-define(LOG_ERROR(At,Reason),
+   (file:write_file(?LOG_PATH,?ERROR_MSG(At,Reason),[append]))
+).
 -else.
+-define(REASON, true).
+-define(LOG_DEFAULT_PATH, true).
+-define(GET_DIR, true).
 -define(LOG_PATH, true).
 -define(CALL_MSG(At),true).
 -define(LOG_CALL(At), true).
 -define(SENT_MSG(From,To,At), true).
 -define(RCVD_MSG(To,From,At), true).
 -define(TIMEOUT_MSG(By,From,At,Timeout), true).
+-define(ERROR_MSG(At, Reason), true).
 -define(LOG_SENT(From,To,At), true).
 -define(LOG_RCVD(To,From,At), true).
 -define(LOG_TIMEOUT(To,From,At,Timeout), true).
+-define(LOG_ERROR(At,Reason), true).
 -endif.
