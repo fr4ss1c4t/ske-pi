@@ -12,7 +12,7 @@
 -define(TIMES, 12).
 
 % default timeout in milliseconds
--define(TIMEOUT, (10)).
+-define(TIMEOUT, (20000)).
 
 % to be used whe converting to milliseconds
 -define(MSEC, 1000).
@@ -39,13 +39,14 @@
 % for debugging purposes (on by default), to turn it off, compile with
 % the command 'make DEBUG='
 -ifdef(debug).
--define(REASON, ('this is just a test')).
--define(LOG_DEFAULT_PATH, ("logs/info.log")).
--define(GET_DIR, (utils:get_dirpath() ++ ?LOG_DEFAULT_PATH)).
+-define(REASON, ('unknown')).
+-define(LOG_DEFAULT_PATH,
+   (io_lib:format("logs/~s.log",[?MODULE_STRING]))).
+-define(GET_DIR, (filename:join(utils:get_dirpath(), ?LOG_DEFAULT_PATH))).
 -define(LOG_PATH, (?GET_DIR)).
 -define(CALL_MSG(At),
-   (io_lib:format("[~s] {MODULE:~p,LINE:~p}: ~p/~p was called~n",
-      [At,?MODULE,(?LINE)-1,?FUNCTION_NAME,?FUNCTION_ARITY]))
+   (io_lib:format("[~s] {FILE:~s.erl,LINE:~p}: ~p/~p was called~n",
+      [At,?MODULE_STRING,(?LINE)-1,?FUNCTION_NAME,?FUNCTION_ARITY]))
 ).
 -define(LOG_CALL(At), (file:write_file(?LOG_PATH,?CALL_MSG(At),[append]))).
 -define(SENT_MSG(From,To,At),
@@ -54,12 +55,13 @@
 -define(RCVD_MSG(By,From,At),
    (io_lib:format("[~s] MSG IN: PID ~p <- PID ~p~n",[At,By,From]))
 ).
--define(TIMEOUT_MSG(By,From,At,Timeout),
-   (io_lib:format("[~s] TIMEOUT: PID ~p <- PID ~p timed out after ~pms~n", [At,By,From,Timeout]))
+-define(TIMEOUT_MSG(At,Timeout,From),
+   (io_lib:format("[~s] TIMEOUT: ~p/~p timed out after ~pms waiting for PID ~p~n",
+      [At,?FUNCTION_NAME,?FUNCTION_ARITY,Timeout,From]))
 ).
 -define(ERROR_MSG(At, Reason),
-   (io_lib:format("[~s] ERROR {MODULE:~p,LINE:~p}: ~p/~p failed! reason:~p~n",
-   [At,?MODULE,(?LINE)-1,?FUNCTION_NAME,?FUNCTION_ARITY,Reason]))
+   (io_lib:format("[~s] {FILE:~s.erl,LINE:~p} ERROR: ~p/~p failed! reason: ~p~n",
+   [At,?MODULE_STRING,(?LINE)-1,?FUNCTION_NAME,?FUNCTION_ARITY,Reason]))
 ).
 -define(LOG_SENT(From,To,At),
    (file:write_file(?LOG_PATH,?SENT_MSG(From,To,At),[append]))
@@ -67,8 +69,8 @@
 -define(LOG_RCVD(To,From,At),
    (file:write_file(?LOG_PATH,?RCVD_MSG(To,From,At),[append]))
 ).
--define(LOG_TIMEOUT(To,From,At,Timeout),
-   (file:write_file(?LOG_PATH,?TIMEOUT_MSG(To,From,At,Timeout),[append]))
+-define(LOG_TIMEOUT(At,Timeout,From),
+   (file:write_file(?LOG_PATH,?TIMEOUT_MSG(At,Timeout,From),[append]))
 ).
 -define(LOG_ERROR(At,Reason),
    (file:write_file(?LOG_PATH,?ERROR_MSG(At,Reason),[append]))
@@ -82,10 +84,10 @@
 -define(LOG_CALL(At), true).
 -define(SENT_MSG(From,To,At), true).
 -define(RCVD_MSG(To,From,At), true).
--define(TIMEOUT_MSG(By,From,At,Timeout), true).
+-define(LOG_TIMEOUT(At,Timeout,From), true).
 -define(ERROR_MSG(At, Reason), true).
 -define(LOG_SENT(From,To,At), true).
 -define(LOG_RCVD(To,From,At), true).
--define(LOG_TIMEOUT(To,From,At,Timeout), true).
+-define(LOG_TIMEOUT(At,Timeout,From), true).
 -define(LOG_ERROR(At,Reason), true).
 -endif.

@@ -34,68 +34,36 @@ clean_up(Result) ->
 
 % the mapper matching atoms with words in each file
 match_to_file(Regex) ->
-  fun (_, File, Fun) ->
-    {ok, [Atoms]} = file:consult(File),
-    lists:foreach(fun (Atom) ->
-      case Regex == Atom of
-        true -> Fun(Atom, File);
-        false -> false
-      end
-    end, Atoms)
-  end.
+   fun (_, File, Fun) ->
+      {ok, [Atoms]} = file:consult(File),
+      lists:foreach(fun (Atom) ->
+         case Regex == Atom of
+           true -> Fun(Atom, File);
+           false -> false
+         end
+      end, Atoms)
+   end.
 
 % the reducer removing duplicate elements
 get_unique(Atom, Files, Fun) ->
-  Unique_Files = sets:to_list(sets:from_list(Files)),
-  lists:foreach(fun (File) -> Fun(Atom, File) end, Unique_Files).
+   Unique_Files = sets:to_list(sets:from_list(Files)),
+   lists:foreach(fun (File) -> Fun(Atom, File) end, Unique_Files).
 
 % indexing all files inside the directory
 index_file_list(Dirpath) ->
-  {ok, Files} = file:list_dir(Dirpath),
-  Filepaths = [ filename:join(Dirpath, File) || File <- Files ],
-  Indices = lists:seq(1, length(Files)),
-  lists:zip(Indices, Filepaths).
+   {ok, Files} = file:list_dir(Dirpath),
+   Filepaths = [filename:join(Dirpath, File) || File <- Files ],
+   Indices = lists:seq(1, length(Files)),
+   lists:zip(Indices, Filepaths).
 
 % getting the path containing the test/log directory
 get_dirpath() ->
    {_,Currpath} = file:get_cwd(),
-   filename:dirname(Currpath)++ "/".
+   filename:dirname(Currpath).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%--------Stream Parallel Utils-------------%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% reads from the input stream of chunks of a
-% list and sends them to the first function
-% in the workflow
-spawn_src(Input) ->
-   fun(Pid) ->
-      spawn(?MODULE, start_src,[Input,Pid])
-   end.
-start_src(Input,Pid) ->
-   loop_src(Input,Pid).
-loop_src([],Pid) ->
-   stop(Pid);
-loop_src([Input|Inputs],Pid) ->
-   send(Input,Pid),
-   loop_src(Inputs,Pid).
-
-% accepts inputs from the output stream and
-% accumulates the results in a list
-spawn_sink() ->
-   fun(Pid) ->
-      spawn(?MODULE,start_sink,[Pid])
-   end.
-start_sink(Pid) ->
-   loop_sink(Pid,[]).
-loop_sink(Pid,Results) ->
-   receive
-      {input,_} = Msg ->
-         Input = extract(Msg),
-         loop_sink(Pid,Results++[Input]);
-      {msg,eos} ->
-         Pid ! {results,Results}
-   end.
 
 % convert to and from tuple form
 format(Input) ->
@@ -137,7 +105,7 @@ mean(List) ->
 
 % takes the median of a list of time measurements
 median(List) ->
-lists:nth(round((length(List) / 2)), lists:sort(List)).
+   lists:nth(round((length(List) / 2)), lists:sort(List)).
 
 % takes the speedup. that is, the improvement in speed
 % between the sequential version and the parallel version
@@ -159,6 +127,6 @@ report(Name, Time, Mean, Median) ->
    io:format(" ~pms, whilst times median is ~pms~n",[Mean/?MSEC,Median/?MSEC]).
 
 print_time() ->
-    {{Year,Month,Day},{Hour,Min,Sec}} = erlang:localtime(),
-    io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~2.10.0B",
-        [Year, Month, Day, Hour, Min, Sec]).
+   {{Year,Month,Day},{Hour,Min,Sec}} = erlang:localtime(),
+   io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~2.10.0B",
+      [Year, Month, Day, Hour, Min, Sec]).

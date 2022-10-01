@@ -13,12 +13,12 @@ benchmark() ->
    benchmark(utils:get_schedulers(), ?REGEX, ?TESTDIR).
 benchmark(Schedulers_Num, Input) ->
    case is_atom(Input) of
-      true -> benchmark(?TESTDIR, Input, Schedulers_Num);
-      false -> benchmark(Input, ?REGEX, Schedulers_Num)
+      true -> benchmark(Schedulers_Num, Input, ?TESTDIR);
+      false -> benchmark(Schedulers_Num, ?REGEX, Input)
    end.
 benchmark(Schedulers_Num, Atom, Testdir)->
    utils:set_schedulers(Schedulers_Num),
-   Abspath = utils:get_dirpath()++Testdir,
+   Abspath = filename:join(utils:get_dirpath(),Testdir),
    io:format("> testing with ~w scheduler(s).~n", [Schedulers_Num]),
    io:format("> looking for the atom '~w' in the following path:~n",[Atom]),
    io:format("~s~n",[Abspath]),

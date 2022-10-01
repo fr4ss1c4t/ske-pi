@@ -17,7 +17,6 @@ ebin:
 
 all: $(SOURCES) $(OBJECTS)
 	mkdir -p logs
-	touch logs/info.log
 	@echo "\nCompilation successful! You may now use SkePi."
 
 clean:
