@@ -1,6 +1,7 @@
 -module(pmap).
 -include("include/usages.hrl").
 -include("include/defines.hrl").
+-compile(nowarn_unused_vars).
 -export([start/2, usage/0]).
 
 usage() -> ?PMAP_H.

@@ -1,3 +1,4 @@
+#!/bin/bash
 EXAMPLES=example/test_mapred_google.erl example/test_stream.erl example/test_mapred.erl
 # SOURCES=$(wildcard *.erl) $(EXAMPLES)
 SOURCES=utils.erl stream.erl mapred_naive.erl mapred_google.erl pmap.erl $(EXAMPLES)

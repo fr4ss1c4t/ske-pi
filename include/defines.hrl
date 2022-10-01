@@ -84,7 +84,7 @@
 -define(LOG_CALL(At), true).
 -define(SENT_MSG(From,To,At), true).
 -define(RCVD_MSG(To,From,At), true).
--define(LOG_TIMEOUT(At,Timeout,From), true).
+-define(TIMEOUT_MSG(At,Timeout,From), true).
 -define(ERROR_MSG(At, Reason), true).
 -define(LOG_SENT(From,To,At), true).
 -define(LOG_RCVD(To,From,At), true).

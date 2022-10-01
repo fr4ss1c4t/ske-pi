@@ -1,6 +1,7 @@
 -module(mapred_google).
 -include("include/usages.hrl").
 -include("include/defines.hrl").
+-compile(nowarn_unused_vars).
 -export([start/3, usage/0]).
 
 usage() -> ?MAPRED_GOOGLE_H.

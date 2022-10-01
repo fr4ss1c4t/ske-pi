@@ -7,13 +7,13 @@ Once you have moved to ske-pi's root directory, you can compile all sources to o
 
 ` make all ` or ` make ` may be used to compile with debug mode turned on.
 
-In this mode, some information regarding inter-process communication (and timeouts, if any have occurred), as well as function calls for each skeleton will be saved to a log file (located in *ske-pi/logs* by default).
+In this mode, some information regarding inter-process communication (and timeouts, if any have occurred), as well as function calls for each skeleton will be saved to a log file (located inside the *ske-pi/logs* directory by default).
 
 ` make all DEBUG= ` or ` make DEBUG= ` will compile with debug mode turned off.
 
 ` make clean ` may be used to remove the directory containing all the object files and keep the log files.
 
-` make cleanall ` will remove both object files and the log files previously generated.
+` make cleanall ` will remove both object files and the log files generated previously.
 
 ## usage examples
 Each module has its own usage function printing a brief description and giving a simple usage example.
@@ -47,4 +47,4 @@ Once you have compiled ske-pi, you may:
 * the erlang shell may be exited with the following command: ` q(). `
 
 ## acknowledgements
-The stream skeleton (*stream.erl*) is taken and then modified from the [skel](https://github.com/ParaPhrase/skel) library for the [ParaPhrase Project](http://calvados.di.unipi.it/paragroup/projects/), whilst the data parallel skeletons (*mapred_google.erl* and *pmap.erl*) are modified versions of Joe Armstrong's examples in the second edition of his *Programming Erlang* book.
+The stream skeleton (*stream.erl*) is taken and then modified from the [skel](https://github.com/ParaPhrase/skel) library for the [ParaPhrase Project](http://calvados.di.unipi.it/paragroup/projects/), whilst the data parallel skeletons (*mapred_google.erl* and *pmap.erl*) are modified versions of Joe Armstrong's examples in the second edition of his [Programming Erlang] (https://pragprog.com/titles/jaerlang2/programming-erlang-2nd-edition/) book.

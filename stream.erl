@@ -1,6 +1,7 @@
 -module(stream).
 -include("include/usages.hrl").
 -include("include/defines.hrl").
+-compile(nowarn_unused_vars).
 -export([usage/0,start_farm/2,start_seq/2,start_pipe/2,start_piped_farm/2,
 start_farm/3,start_piped_farm/3]).
 
