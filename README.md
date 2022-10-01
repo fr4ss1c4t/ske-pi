@@ -47,4 +47,4 @@ Once you have compiled ske-pi, you may:
 * the erlang shell may be exited with the following command: ` q(). `
 
 ## acknowledgements
-The stream skeleton (*stream.erl*) is taken and then modified from the [skel](https://github.com/ParaPhrase/skel) library for the [ParaPhrase Project](http://calvados.di.unipi.it/paragroup/projects/), whilst the data parallel skeletons (*mapred_google.erl* and *pmap.erl*) are modified versions of Joe Armstrong's examples in the second edition of his [Programming Erlang] (https://pragprog.com/titles/jaerlang2/programming-erlang-2nd-edition/) book.
+The stream skeleton (*stream.erl*) is taken and then modified from the [skel](https://github.com/ParaPhrase/skel) library for the [ParaPhrase Project](http://calvados.di.unipi.it/paragroup/projects/), whilst the data parallel skeletons (*mapred_google.erl* and *pmap.erl*) are modified versions of Joe Armstrong's examples in the second edition of his [Programming Erlang](https://pragprog.com/titles/jaerlang2/programming-erlang-2nd-edition/) book.

@@ -61,6 +61,26 @@ get_dirpath() ->
    {_,Currpath} = file:get_cwd(),
    filename:dirname(Currpath).
 
+% finding an atom in a file containing a list of atoms
+is_found(Regex,File) ->
+   {ok,[Atoms]} = file:consult(File),
+   lists:any(fun(Atom)-> Regex==Atom end, Atoms).
+
+% similiar to the unix command "grep <word> <dirpath>".
+% it should print a list of files that contain the Regex searched
+par_grep(Dirpath, Regex) ->
+  Indexed = utils:index_file_list(Dirpath),
+  Index = mapred_google:start(utils:match_to_file(Regex),
+                        fun utils:get_unique/3,
+                        Indexed),
+  dict:find(Regex, Index).
+
+% sequential version of grep
+seq_grep(Dirpath,Regex)->
+   Indexed = utils:index_file_list(Dirpath),
+   Filepaths = [Name||{Key, Name}<-Indexed],
+   {ok,lists:filter(fun(File) -> utils:is_found(skepi,File) end, Filepaths)}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%--------Stream Parallel Utils-------------%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

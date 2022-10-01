@@ -1,6 +1,6 @@
 -module(test_mapred_google).
 -include("include/defines.hrl").
--export([grep/2,benchmark/0, benchmark/2, benchmark/3]).
+-export([benchmark/0, benchmark/2, benchmark/3]).
 
 % takes the number of schedulers, the name(optional) of a directory containing some test files and/or an
 % some test files and/or an atom(optional) to be searched.
@@ -33,8 +33,8 @@ benchmark(Schedulers_Num, Atom, Testdir)->
 
    io:format("~nrunning tests, please wait...~n~n"),
 
-   Seq = fun() -> seq_grep(Abspath,Atom, Files) end,
-   Par = fun() -> grep(Abspath,Atom) end,
+   Seq = fun() -> utils:seq_grep(Abspath, Atom) end,
+   Par = fun() -> utils:par_grep(Abspath,Atom) end,
    Time_Seq = utils:test_loop(?TIMES,Seq, []),
    Mean_Seq = utils:mean(Time_Seq),
    Median_Seq = utils:median(Time_Seq),
@@ -46,42 +46,3 @@ benchmark(Schedulers_Num, Atom, Testdir)->
    utils:report(?SEQ, Time_Seq, Mean_Seq, Median_Seq),
    utils:report(?GOOGLE, Time_Par, Mean_Par, Median_Par),
    io:format("speedup of the ~p version is ~p~n", [?GOOGLE, Speedup_Par]).
-
-
-% similiar to the unix command "grep <word> <dirpath>".
-% it should print a list of files that contain the Regex searched
-grep(Dirpath, Regex) ->
-  Indexed = utils:index_file_list(Dirpath),
-  Index = mapred_google:start(utils:match_to_file(Regex),
-                        fun utils:get_unique/3,
-                        Indexed),
-  dict:find(Regex, Index).
-
-%TODO fix this asap
-% same as above but operating sequentially
-seq_grep(Dirpath, Regex, Files)->
-   %lists:foreach(fun (File) ->
-   %   {ok, [Words]} = file:consult(File),
-   %   lists:foreach(fun (Word) ->
-   %     case Regex == Word of
-   %       true -> Word;
-   %       false -> false
-   %     end
-   %  end, Words)
-  %end, Files).
-  timer:sleep(100).
-  %io:format("SEQ~n", []).
-
-seq_mapred(Map, Reduce,Input) ->
-  %% Map Phase
-  IntermediateLists = lists:map(fun ({K1,V1}) -> Map(K1,V1) end, Input),
-  IntermediatePairs = lists:flatten(IntermediateLists),
-  IntermediateMap = lists:foldl(
-    fun({K2,V2}, Dict) ->
-      dict:append(K2,V2,Dict)
-    end, dict:new(), IntermediatePairs),
-
-  %% Reduce Phase
-  dict:map(fun(K2, ListOfV2) ->
-             Reduce(K2, ListOfV2)
-           end, IntermediateMap).

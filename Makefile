@@ -1,4 +1,3 @@
-#!/bin/bash
 EXAMPLES=example/test_mapred_google.erl example/test_stream.erl example/test_mapred.erl
 # SOURCES=$(wildcard *.erl) $(EXAMPLES)
 SOURCES=utils.erl stream.erl mapred_naive.erl mapred_google.erl pmap.erl $(EXAMPLES)
@@ -19,6 +18,14 @@ ebin:
 all: $(SOURCES) $(OBJECTS)
 	mkdir -p logs
 	@echo "\nCompilation successful! You may now use SkePi."
+
+compress: ske-pi.tar.gz
+
+ske-pi.tar.gz:
+	@touch ske-pi.tar.gz
+	tar --exclude=ske-pi.tar.gz --exclude=./.git -zcf ske-pi.tar.gz .
+	@echo "Creating a archive of this directory and its contents."
+
 
 clean:
 	@echo "Cleaning up all object files."
