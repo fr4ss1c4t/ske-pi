@@ -40,16 +40,16 @@ start(M_Fun, List, {processes,X}=Split) ->
 do_job(Parent,Tag, M_Fun, I) ->
    ?LOG_CALL(?NOW),
    Parent ! {Tag, catch(M_Fun(I))},
-   ?LOG_SENT(Parent,self(),?NOW).
+   ?LOG_SENT(self(),Parent,?NOW).
 
 collect(_,0,_,List) ->
    ?LOG_CALL(?NOW),
    List;
 collect(Pid,N,Tag,List) ->
    receive
-      {Tag,Result} -> ?LOG_RCVD(self(),Tag,?NOW),
+      {Tag,Result} -> ?LOG_RCVD(Tag,self(),?NOW),
          collect(Pid,N-1,Tag,Result++List)
    after ?TIMEOUT ->
-      (?LOG_TIMEOUT(?NOW,?TIMEOUT,Tag)),
+      (?LOG_TIMEOUT(?NOW,?TIMEOUT,Pid)),
       exit(timed_out)
    end.

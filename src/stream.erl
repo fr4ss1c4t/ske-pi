@@ -114,7 +114,7 @@ loop_fun(Fun,Pid) ->
       {input,_} = Msg_Input ->
          Msg_Input1 = Fun(Msg_Input),
          Pid ! Msg_Input1,
-         ?LOG_SENT(Pid,self(),?NOW),
+         ?LOG_SENT(self(),Pid,?NOW),
          loop_fun(Fun,Pid);
       {msg,eos} ->
          utils:stop(Pid),
@@ -128,7 +128,7 @@ emit([Worker|Rest]=Workers) ->
    receive
       {input,_} = Input ->
          Worker ! Input,
-         ?LOG_SENT(Worker,self(),?NOW),
+         ?LOG_SENT(self(),Worker,?NOW),
          emit(Rest++[Worker]);
       {msg, eos} ->
          stop_procs(Workers)
@@ -140,11 +140,11 @@ collect(W,Pid) ->
    receive
       {input, _} = Input ->
          Pid ! Input,
-         ?LOG_SENT(Pid,self(),?NOW),
+         ?LOG_SENT(self(),Pid,?NOW),
          collect(W,Pid);
       {msg,eos} when W =< 1 ->
          Pid ! {msg, eos},
-         ?LOG_SENT(Pid,self(),?NOW);
+         ?LOG_SENT(self(),Pid,?NOW);
       {msg,eos} ->
          collect(W-1,Pid)
    end.

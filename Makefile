@@ -15,7 +15,7 @@ ebin:
 	erlc $(DEBUG) $(INCLUDES) -o ebin $<
 
 .DEFAULT_GOAL := all
-.PHONY: all clean cleanall compress
+.PHONY: all clean cleanall archive
 
 all: $(SOURCES) $(OBJECTS)
 	@mkdir -p logs

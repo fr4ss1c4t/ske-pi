@@ -44,7 +44,7 @@ reduce(Parent, M_Fun, R_Fun, Input) ->
    spawn_procs(Pid, R_Fun, dict:to_list(Intermediate_res)),
    R = dict:size(Intermediate_res),
    Final_res = collect(R, dict:new()),
-   ?LOG_SENT(Parent,self(),?NOW),
+   ?LOG_SENT(self(),Parent,?NOW),
    Parent ! {self(), Final_res}.
 
 % the collector receives N key-value pairs and merges them
@@ -74,5 +74,5 @@ spawn_procs(Parent, Fun, Pairs) ->
 % sends key-value pairs to Pid and then terminates
 do_job(Pid, Fun, {K,V}) ->
    ?LOG_CALL(?NOW),
-   ?LOG_SENT(Pid,self(),?NOW),
+   ?LOG_SENT(self(),Pid,?NOW),
    Fun(K,V, fun(K2,V2) -> Pid ! {K2,V2} end).

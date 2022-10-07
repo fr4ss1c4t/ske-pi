@@ -1,7 +1,7 @@
 -module(preduce).
 -include("include/usages.hrl").
 -include("include/defines.hrl").
--export([start/3, start/4,start/5, usage/0, reduce/4]).
+-export([start/3, start/4,start/5, usage/0]).
 
 usage() -> ?PREDUCE_H.
 
@@ -41,7 +41,7 @@ reduce(Fun, Combiner, List) ->
    Pids =
       lists:map(fun (L) ->
          F = fun () -> Parent ! {self (), Fun(L)},
-            ?LOG_SENT(Parent,self(),?NOW)
+            ?LOG_SENT(self(),Parent,?NOW)
          end,
          {Pid, _} = erlang:spawn_monitor(F), Pid end,
          List),
@@ -52,7 +52,7 @@ collect(Pid) ->
    ?LOG_CALL(?NOW),
    ?LOG_RCVD(self(),Pid,?NOW),
    receive
-      {Pid, R} -> R
+      {Pid, Result} -> Result
    after ?TIMEOUT ->
       (?LOG_TIMEOUT(?NOW,?TIMEOUT,Pid)),
       exit(timed_out)
