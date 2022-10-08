@@ -93,11 +93,11 @@
 
    io:format("usage example 3:~n",[]),
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n",[]),
-   io:format(">M_Fun = fun(Chunk)-> [X*X||X<-Chunk] end.~n",[]),
-   io:format(">R_Fun = fun(X,Y) -> X+Y end.~n",[]),
-   io:format(">mapred_naive:start(M_Fun, R_Fun, 0, L 2).~n",[]),
+   io:format(">M_Fun = fun(Chunk)-> [[X*X]||X<-Chunk] end.~n",[]),
+   io:format(">R_Fun = fun(X,Y) -> X++Y end.~n",[]),
+   io:format(">mapred_naive:start(M_Fun, R_Fun, [], L, 2).~n",[]),
    io:format("expected output:~n",[]),
-   io:format("same as above~n",[])
+   io:format("[100,81,64,49,36,25,16,9,4,1]~n",[])
 ).
 
 -define(MAPRED_SMART_H,

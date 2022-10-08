@@ -51,7 +51,7 @@ collect(_, _, 0, _, Acc) ->
 collect(Tag, Parent, N, R_Fun, Acc) ->
    receive
       {Pid, Tag, Result} -> ?LOG_RCVD(self(),Pid,?NOW),
-         collect(Tag,Parent, N-1, R_Fun, R_Fun(Result,Acc))
+         collect(Tag,Parent, N-1, R_Fun, catch(R_Fun(Result,Acc)))
    end.
 
 spawn_procs(Pid, Tag, M_Fun, List) ->
@@ -64,5 +64,5 @@ spawn_procs(Pid, Tag, M_Fun, List) ->
 
 do_job(Pid, Tag, M_Fun, X) ->
    ?LOG_CALL(?NOW),
-   Pid ! {self(), Tag, catch(M_Fun(X))},
+   Pid ! {self(), Tag, catch(catch(M_Fun(X)))},
    ?LOG_SENT(self(),Pid,?NOW).

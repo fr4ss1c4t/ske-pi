@@ -28,7 +28,7 @@ combine(_, []) -> [];
 combine(Combiner, [R1|Results]) ->
    combine(Combiner, Results, R1).
 combine(Combiner, [R2|Results], R1) ->
-   combine(Combiner, Results, Combiner(R1, R2));
+   combine(Combiner, Results, catch(Combiner(R1, R2)));
 combine(_, [], R) -> R.
 
 % cleans up the output of the google mapreduce
@@ -42,7 +42,7 @@ match_to_file(Regex) ->
       {ok, [Atoms]} = file:consult(File),
       lists:foreach(fun (Atom) ->
          case Regex == Atom of
-           true -> Fun(Atom, File);
+           true -> catch(Fun(Atom, File));
            false -> false
          end
       end, Atoms)
@@ -51,7 +51,7 @@ match_to_file(Regex) ->
 % the reducer removing duplicate elements
 get_unique(Atom, Files, Fun) ->
    Unique_Files = sets:to_list(sets:from_list(Files)),
-   lists:foreach(fun (File) -> Fun(Atom, File) end, Unique_Files).
+   lists:foreach(fun (File) -> catch(Fun(Atom, File)) end, Unique_Files).
 
 % indexing all files inside the directory
 index_file_list(Dirpath) ->
@@ -94,9 +94,11 @@ to_tuple(Input) ->
    {input,Input}.
 from_tuple({input,Input}) ->
    Input.
+
+% applies the function to its input
 apply(Fun) ->
    fun({input,Input}) ->
-      {input,Fun(Input)}
+      {input,catch(Fun(Input))}
    end.
 
 % send messages to a process, eos is an

@@ -70,8 +70,8 @@ run_seq(Seq_Fun,Pid) ->
 % parses the tasks
 build(Tasks,Bucket) ->
    ?LOG_CALL(?NOW),
-   Funcs = [parse(Task) || Task <-Tasks],
-   lists:foldr(fun(Func,Pid)-> Func(Pid) end, Bucket, Funcs).
+   Funs = [parse(Task) || Task <-Tasks],
+   lists:foldr(fun(Fun,Pid)-> catch(Fun(Pid)) end, Bucket, Funs).
 
 parse(Fun) when is_function(Fun,1)->
    ?LOG_CALL(?NOW),

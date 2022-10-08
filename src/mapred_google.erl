@@ -75,4 +75,4 @@ spawn_procs(Parent, Fun, Pairs) ->
 do_job(Pid, Fun, {K,V}) ->
    ?LOG_CALL(?NOW),
    ?LOG_SENT(self(),Pid,?NOW),
-   Fun(K,V, fun(K2,V2) -> Pid ! {K2,V2} end).
+   catch(Fun(K,V, fun(K2,V2) -> Pid ! {K2,V2} end)).

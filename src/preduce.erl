@@ -40,7 +40,7 @@ reduce(Fun, Combiner, List) ->
    Parent = self (),
    Pids =
       lists:map(fun (L) ->
-         F = fun () -> Parent ! {self (), Fun(L)},
+         F = fun () -> Parent ! {self (), catch(Fun(L))},
             ?LOG_SENT(self(),Parent,?NOW)
          end,
          {Pid, _} = erlang:spawn_monitor(F), Pid end,

@@ -22,7 +22,7 @@ map(M_Fun, Chunks) ->
    Parent = self (),
    Pids =
       lists:map(fun (C) ->
-         F = fun () -> Parent ! {self (), M_Fun(C)},
+         F = fun () -> Parent ! {self (), catch(M_Fun(C))},
             ?LOG_SENT(self(),Parent,?NOW)
          end,
          {Pid, _} = erlang:spawn_monitor(F), Pid end,
@@ -53,8 +53,8 @@ reduce(M_Fun, R_Fun, Combiner, Chunks) ->
    Parent = self (),
    Intermediate_Results = map(M_Fun, Chunks),
    Pids =
-      lists:map(fun (L) ->
-         F = fun () -> Parent ! {self (), R_Fun(L)},
+      lists:map(fun (I) ->
+         F = fun () -> Parent ! {self (), catch(R_Fun(I))},
             ?LOG_SENT(self(),Parent,?NOW)
          end,
          {Pid, _} = erlang:spawn_monitor(F), Pid end,
