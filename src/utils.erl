@@ -7,9 +7,18 @@
 %%--------------Data Parallel Utils-----------%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% splits the list into chunks of equal length
+% splits the list into chunks of equal length if (length(List) % Len) == 0,
+% otherwise list will be split into chunks of equal length except for the
+% last chunk, whose length will be less than Len.
 make_chunks(Len,List) ->
-   make_chunks(List,[],0,Len).
+   Length = case length(List) rem Len of
+       0 -> 0;
+       N -> Len - N
+   end,
+   Padded_List = lists:duplicate(Length,padding),
+   Chunked_List = make_chunks(Padded_List ++ lists:reverse(List),[],0,Len),
+   lists:droplast(Chunked_List) ++
+   [lists:filter(fun(E) -> is_atom(E)==false end, lists:last(Chunked_List))].
 make_chunks([],Acc,_,_) -> Acc;
 make_chunks([Hd|Tl],Acc,Start,Max) when Start==Max ->
    make_chunks(Tl,[[Hd] | Acc],1,Max);

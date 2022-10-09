@@ -2,72 +2,67 @@
 -include("include/usages.hrl").
 -include("include/defines.hrl").
 -compile(nowarn_unused_vars).
--export([start/4, start/5,start/6, usage/0]).
+-export([start/4, start/5, usage/0]).
 
 usage() -> ?MAPRED_NAIVE_H.
 
 start(M_Fun, R_Fun, Acc, List) ->
    ?LOG_CALL(?NOW),
-   start(M_Fun, R_Fun, R_Fun, Acc, List, {processes, utils:get_schedulers()}).
-start(M_Fun, R_Fun, Acc, List, Split) ->
+   Split = {processes, utils:get_schedulers()},
+   start(M_Fun, R_Fun, Acc, List, Split).
+start(M_Fun, R_Fun, Acc, {chunked,Chunks}=List, Split) ->
    ?LOG_CALL(?NOW),
-   start(M_Fun, R_Fun, R_Fun, Acc, List, Split).
-start(M_Fun, R_Fun, Combiner, Acc, List, Split) ->
+   S = self(),
+   Tag = erlang:make_ref(),
+   Pid = spawn(fun () -> reduce(S, Tag, M_Fun, R_Fun, Acc, Chunks) end),
+   ?LOG_RCVD(self(),Pid,?NOW),
+   receive
+      {Pid, Result} -> Result
+   after
+      ?TIMEOUT -> (?LOG_TIMEOUT(?NOW,?TIMEOUT,Pid)),
+      exit(timed_out)
+   end;
+start(M_Fun, R_Fun, Acc, List, Split) when is_integer(Split) ->
    ?LOG_CALL(?NOW),
-   R_Fun2 = fun (L) -> lists:foldl(R_Fun, Acc, L) end,
-   reduce(M_Fun, R_Fun2, Combiner, List, Split).
-
-map(M_Fun, Chunks) ->
-   ?LOG_CALL(?NOW),
-   Parent = self (),
-   Pids =
-      lists:map(fun (C) ->
-         F = fun () -> Parent ! {self (), catch(M_Fun(C))},
-            ?LOG_SENT(self(),Parent,?NOW)
-         end,
-         {Pid, _} = erlang:spawn_monitor(F), Pid end,
-         Chunks),
-   lists:map(fun collect/1, Pids).
-
-reduce(M_Fun, R_Fun, Combiner, List, Split) ->
-   ?LOG_CALL(?NOW),
-   reduce(M_Fun, R_Fun, Combiner, List, no_split, Split).
-reduce(M_Fun, R_Fun, Combiner, List, no_split, SplitTerm) when is_integer(SplitTerm) ->
-   ?LOG_CALL(?NOW),
-   reduce(M_Fun, R_Fun, Combiner, List, split, SplitTerm);
-reduce(M_Fun, R_Fun, Combiner, List, no_split, {processes,X}) ->
+   Chunks = utils:make_chunks(Split,List),
+   start(M_Fun, R_Fun, Acc, {chunked,Chunks},  Split);
+start(M_Fun, R_Fun, Acc, List, {processes, X}=Split) ->
    ?LOG_CALL(?NOW),
    L = length(List),
    case L rem X of
       0 ->
-         reduce(M_Fun, R_Fun, Combiner, List, split, L div X);
+         Chunks = utils:make_chunks(L div X, List);
       _ ->
-         reduce(M_Fun, R_Fun, Combiner, List, split, L div X + 1)
-   end;
-reduce(M_Fun, R_Fun, Combiner, List, split, Chunks_Len) ->
-   ?LOG_CALL(?NOW),
-   Chunks = utils:make_chunks(Chunks_Len,List),
-   reduce(M_Fun, R_Fun, Combiner, Chunks).
-reduce(M_Fun, R_Fun, Combiner, Chunks) ->
-   ?LOG_CALL(?NOW),
-   Parent = self (),
-   Intermediate_Results = map(M_Fun, Chunks),
-   Pids =
-      lists:map(fun (I) ->
-         F = fun () -> Parent ! {self (), catch(R_Fun(I))},
-            ?LOG_SENT(self(),Parent,?NOW)
-         end,
-         {Pid, _} = erlang:spawn_monitor(F), Pid end,
-         Intermediate_Results),
-   Results = lists:map(fun collect/1, Pids),
-   utils:combine(Combiner, Results).
+         Chunks = utils:make_chunks(L div X + 1, List)
+   end,
+   start(M_Fun, R_Fun, Acc, {chunked,Chunks}, Split).
 
-collect(Pid) ->
+reduce(Parent, Tag, M_Fun, R_Fun, Acc, List) ->
+   Pid = self(),
+   spawn_procs(Pid, Tag, M_Fun, List),
+   R = length(List),
+   Final_Res = collect(Tag, Pid, R, R_Fun, Acc),
+   ?LOG_SENT(self(),Parent,?NOW),
+   Parent ! {self(), Final_Res}.
+
+collect(_, _, 0, _, Acc) ->
    ?LOG_CALL(?NOW),
-   ?LOG_RCVD(self(),Pid,?NOW),
+   Acc;
+collect(Tag, Parent, N, R_Fun, Acc) ->
    receive
-      {Pid, Result} -> Result
-   after ?TIMEOUT ->
-      (?LOG_TIMEOUT(?NOW,?TIMEOUT,Pid)),
-      exit(timed_out)
+      {Pid, Tag, Result} -> ?LOG_RCVD(self(),Pid,?NOW),
+         collect(Tag,Parent, N-1, R_Fun, catch(R_Fun(Result,Acc)))
    end.
+
+spawn_procs(Pid, Tag, M_Fun, List) ->
+   ?LOG_CALL(?NOW),
+   lists:foreach(
+   fun(I) ->
+      spawn_link(fun() ->
+         do_job(Pid, Tag, M_Fun, I) end)
+   end, List).
+
+do_job(Pid, Tag, M_Fun, X) ->
+   ?LOG_CALL(?NOW),
+   Pid ! {self(), Tag, catch(M_Fun(X))},
+   ?LOG_SENT(self(),Pid,?NOW).

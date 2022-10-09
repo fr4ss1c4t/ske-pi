@@ -41,16 +41,16 @@ benchmark(Schedulers_Num, Exp, Chunks_Exp) ->
       lists:foldl((fun(X,Sum) ->
          X+Sum end),0,lists:map(fun(X)->
             ?COMPUTATION(X,Exp) end,List)) end,
-   M_Fun = fun(Chunk)-> [?COMPUTATION(X,Exp) || X<-Chunk] end,
-   M_Fun1 = fun(Chunk)->lists:sum([?COMPUTATION(X,Exp) || X<-Chunk]) end,
+   M_Fun = fun(Chunk) -> [?COMPUTATION(X,Exp) || X<-Chunk] end,
+   M_Fun1 = fun(Chunk) -> lists:sum([?COMPUTATION(X,Exp) || X<-Chunk]) end,
    R_Fun = fun(A,B) -> A+B end,
    % naive version
    N_MapRed = fun() ->
-      mapred_naive:start(M_Fun, R_Fun, 0, List) end,
+      mapred_naive:start(M_Fun1, R_Fun, 0, List) end,
 
    % smart version
    S_MapRed = fun() ->
-      mapred_smart:start(M_Fun1, R_Fun, 0, List) end,
+      mapred_smart:start(M_Fun, R_Fun, 0, List) end,
 
    Time_Seq = utils:test_loop(?TIMES,Seq, []),
    Mean_Seq = utils:mean(Time_Seq),
