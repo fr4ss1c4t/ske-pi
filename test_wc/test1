@@ -1737,4 +1737,4 @@
  attributes_info, token_info, set_attribute, custom_clean, check_enum, 
  is_directory, make_integer, cookie, node_cookie, createLinearGradientBrush, 
  createRadialGradientBrush, encode, utf8_list_to_binary, utf8_binary_to_list, 
- endEdit, paintBackground, sync_send_event, sync_send_all_state_event, ].
+ endEdit, paintBackground, sync_send_event, sync_send_all_state_event].
