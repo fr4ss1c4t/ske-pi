@@ -2,8 +2,15 @@
 -include("include/usages.hrl").
 -include("include/defines.hrl").
 -compile(nowarn_unused_vars).
--export([usage/0,start_farm/2,start_seq/2,start_pipe/2,start_piped_farm/2,
-start_farm/3,start_piped_farm/3]).
+-export([usage/0,
+start_farm/2,
+start_seq/2,
+start_pipe/2,
+start_piped_farm/2,
+start_seq/3,
+start_pipe/3,
+start_farm/4,
+start_piped_farm/4]).
 
 usage() -> ?STREAM_H.
 
@@ -13,30 +20,83 @@ usage() -> ?STREAM_H.
 start_farm(W_Fun,List) ->
    ?LOG_CALL(?NOW),
    W = erlang:system_info(schedulers_online),
-   start_farm(W,W_Fun,List).
-start_farm(W,W_Fun,List) ->
+   start_farm(W,W_Fun,List,{processes,utils:get_schedulers()}).
+start_farm(W,W_Fun,List,Split) when is_integer(Split)->
    ?LOG_CALL(?NOW),
-   start(self(),[{farm, [{seq,W_Fun}], W}], List).
+   Chunks = utils:make_chunks(Split, List),
+   start(self(),[{farm, [{seq,W_Fun}], W}], Chunks);
+start_farm(W,W_Fun,List,{processes,X}=Split)->
+   ?LOG_CALL(?NOW),
+   L = length(List),
+   case L rem X of
+      0 ->
+         Chunks = utils:make_chunks(L div X, List);
+      _ ->
+         Chunks = utils:make_chunks(L div X + 1, List)
+   end,
+   start(self(),[{farm, [{seq,W_Fun}], W}], Chunks).
 
 start_pipe(Stages,List) ->
+   start_pipe(Stages,List,{processes,utils:get_schedulers()}).
+start_pipe(Stages,List,Split) when is_integer(Split) ->
    ?LOG_CALL(?NOW),
+   Chunks = utils:make_chunks(Split,List),
    start(self(),lists:map(fun(Fun)->
       {seq,Fun}
-   end, Stages), List).
+   end, Stages), Chunks);
+start_pipe(Stages,List,{processes,X}=Split) ->
+   ?LOG_CALL(?NOW),
+   L = length(List),
+   case L rem X of
+      0 ->
+         Chunks = utils:make_chunks(L div X, List);
+      _ ->
+         Chunks = utils:make_chunks(L div X + 1, List)
+   end,
+   start(self(),lists:map(fun(Fun)->
+      {seq,Fun}
+   end, Stages), Chunks).
 
 start_piped_farm(Stages,List) ->
    ?LOG_CALL(?NOW),
-   W = erlang:system_info(schedulers_online),
-   start_piped_farm(W,Stages,List).
-start_piped_farm(W,Stages,List) ->
+   W = utils:get_schedulers(),
+   start_piped_farm(W,Stages,List,{processes,utils:get_schedulers()}).
+
+start_piped_farm(W,Stages,List,Split) when is_integer(Split) ->
    ?LOG_CALL(?NOW),
+   Chunks = utils:make_chunks(Split,List),
    start(self(),lists:map(fun(Fun)->
       {farm, [{seq,Fun}], W}
-   end, Stages), List).
+   end, Stages), Chunks);
+start_piped_farm(W,Stages,List,{processes,X}=Split) ->
+   ?LOG_CALL(?NOW),
+   L = length(List),
+   case L rem X of
+      0 ->
+         Chunks = utils:make_chunks(L div X, List);
+      _ ->
+         Chunks = utils:make_chunks(L div X + 1, List)
+   end,
+   start(self(),lists:map(fun(Fun)->
+      {farm, [{seq,Fun}], W}
+   end, Stages), Chunks).
 
 start_seq(W_Fun, List) ->
    ?LOG_CALL(?NOW),
-   start(self(),[{seq,W_Fun}],List).
+   start_seq(W_Fun, List, {processes,utils:get_schedulers()}).
+start_seq(W_Fun, List, Split) when is_integer(Split) ->
+   ?LOG_CALL(?NOW),
+   start(self(),[{seq,W_Fun}],utils:make_chunks(Split,List));
+start_seq(W_Fun, List, {processes,X}=Split) ->
+   ?LOG_CALL(?NOW),
+   L = length(List),
+   case L rem X of
+      0 ->
+         Chunks = utils:make_chunks(L div X, List);
+      _ ->
+         Chunks = utils:make_chunks(L div X + 1, List)
+   end,
+   start(self(),[{seq,W_Fun}],Chunks).
 
 % returns the received results given the input stream and the
 % tasks

@@ -54,9 +54,16 @@ collect(0,Dict) ->
    Dict;
 collect(N,Dict) ->
    receive
-      {Key, Val} ->
-      Dict1 = dict:append(Key,Val,Dict),
-      collect(N,Dict1);
+      {Pid, Key, Val} when is_atom(Pid)==false->
+         ?LOG_RCVD(self(),Pid,?NOW),
+         case dict:is_key(Key, Dict) of
+            true ->
+               Dict1 = dict:append(Key, Val, Dict),
+               collect(N, Dict1);
+            false ->
+               Dict1 = dict:store(Key,[Val], Dict),
+               collect(N, Dict1)
+            end;
       {'EXIT', Who, _Why} ->
          ?LOG_RCVD(self(),Who,?NOW),
          collect(N-1, Dict)
@@ -75,4 +82,4 @@ spawn_procs(Parent, Fun, Pairs) ->
 do_job(Pid, Fun, {K,V}) ->
    ?LOG_CALL(?NOW),
    ?LOG_SENT(self(),Pid,?NOW),
-   catch(Fun(K,V, fun(K2,V2) -> Pid ! {K2,V2} end)).
+   catch(Fun(K,V, fun(K2,V2) -> Pid ! {self(),K2,V2} end)).

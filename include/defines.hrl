@@ -20,20 +20,22 @@
 % the default atom, to be searched in the google mapreduce tests
 -define(REGEX, (skepi)).
 
-% the default directory, to be used in the google mapreduce tests
--define(TESTDIR, ("test")).
+% the default directories, to be used in the google mapreduce tests
+-define(TESTDIR_GREP, ("test_grep")).
+-define(TESTDIR_WC, ("test_wc")).
 
 % time and date, to be used in debug mode showing inter-process communication
 -define(NOW, (utils:print_time())).
 
-% some strings identifying the type of skeleton
--define(SEQ, ("SEQ")).
--define(NAIVE, ("NAIVE MAPREDUCE")).
--define(SMART, ("SMART MAPREDUCE")).
--define(GOOGLE, ("GOOGLE MAPREDUCE")).
--define(PIPE, ("STREAM PIPE")).
--define(FARM, ("STREAM FARM")).
--define(PIPED_FARM, ("STREAM PIPES OF FARMS")).
+% some atoms identifying the type of skeleton
+-define(SEQ, ("Sequential")).
+-define(COMB, ("Combined MapReduce")).
+-define(MAPRED, ("MapReduce")).
+-define(SMART, ("Smart MapReduce")).
+-define(GOOGLE, ("Google MapReduce")).
+-define(PIPE, ("Stream Pipe")).
+-define(FARM, ("Stream Farm")).
+-define(PIPED_FARM, ("Stream Pipes of Farms")).
 
 
 % for debugging purposes (on by default), to turn it off, compile with

@@ -61,8 +61,9 @@
    io:format("same as above~n",[])
 ).
 
--define(MAPRED_SMART_H,
-   io:format("--- mapred_smart description ---~n",[]),
+
+-define(MAPRED_H,
+   io:format("--- mapred description ---~n",[]),
    io:format("takes two user-defined functions, the first one is a ",[]),
    io:format("mapper and the second is a reducer; a combiner function ",[]),
    io:format("to fuse together the results of each reducer (optional); ",[]),
@@ -74,13 +75,14 @@
    io:format("it starts as many processes as there are chunks in input, ",[]),
    io:format("applies the map function to each chunk and ",[]),
    io:format("sends the result to the reducer processes. ~n",[]),
-   io:format("the final results are combined into a single output. ~n~n",[]),
+   io:format("the final results are combined into a signle output by",[]),
+   io:format("applying the recursive combiner function. ~n~n",[]),
 
    io:format("usage example 1:~n",[]),
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n",[]),
    io:format(">M_Fun = fun(Chunk)-> [X*X||X<-Chunk] end.~n",[]),
    io:format(">R_Fun = fun(X,Y) -> X+Y end.~n",[]),
-   io:format(">mapred_smart:start(M_Fun, R_Fun, 0, L).~n",[]),
+   io:format(">mapred:start(M_Fun, R_Fun, 0, L).~n",[]),
    io:format("expected output:~n",[]),
    io:format("385~n"),
 
@@ -88,7 +90,7 @@
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n",[]),
    io:format(">M_Fun = fun(Chunk)-> [[X*X]||X<-Chunk] end.~n",[]),
    io:format(">R_Fun = fun(X,Y) -> X++Y end.~n",[]),
-   io:format(">mapred_smart:start(M_Fun, R_Fun, [], L, 2).~n",[]),
+   io:format(">mapred:start(M_Fun, R_Fun, [], L, 2).~n",[]),
    io:format("expected output:~n",[]),
    io:format("[100,81,64,49,36,25,16,9,4,1]~n",[]),
 
@@ -97,17 +99,17 @@
    io:format(">M_Fun = fun(Chunk)-> Chunk end.~n",[]),
    io:format(">R_Fun = fun(X,Y) -> X+Y end.~n",[]),
    io:format(">C_Fun = fun(X1,X2) when X1>X2 -> X1; (_X1,X2) -> X2 end.~n",[]),
-   io:format(">mapred_smart:start(M_Fun, R_Fun, C_Fun, 0, L, ",[]),
+   io:format(">mapred:start(M_Fun, R_Fun, C_Fun, 0, L, ",[]),
    io:format("{processes, 4}).~n",[]),
    io:format("expected output:~n",[]),
    io:format("each chunk is reduced by adding together all of its ",[]),
    io:format("elements and the final result is the biggest value among ",[]),
-   io:format("the ones previously obtained (dependent on the list ",[]),
+   io:format("the ones previously obtained (NB: dependent on the list ",[]),
    io:format("L's elements, which are randomly generated)~n",[])
 ).
 
--define(MAPRED_NAIVE_H,
-   io:format("--- mapred_naive description ---~n",[]),
+-define(MAPRED_SMART_H,
+   io:format("--- mapred_smart description ---~n",[]),
    io:format("takes two user-defined functions, the first one is a ",[]),
    io:format("mapper and the second is a reducer; an accumulator and ",[]),
    io:format("a list to be split into chunks. ~n",[]),
@@ -123,7 +125,7 @@
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n",[]),
    io:format(">M_Fun = fun(Chunk)-> lists:sum([X*X||X<-Chunk]) end.~n",[]),
    io:format(">R_Fun = fun(A,B) -> A+B end.~n",[]),
-   io:format(">mapred_naive:start(M_Fun, R_Fun, 0, L).~n",[]),
+   io:format(">mapred_smart:start(M_Fun, R_Fun, 0, L).~n",[]),
    io:format("expected output:~n",[]),
    io:format("385~n"),
 
@@ -131,7 +133,7 @@
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n",[]),
    io:format(">M_Fun = fun(Chunk)-> [X*X||X<-Chunk] end.~n",[]),
    io:format(">R_Fun = fun(X,Y) -> X++Y end.~n",[]),
-   io:format(">mapred_naive:start(M_Fun, R_Fun, [], L, ",[]),
+   io:format(">mapred_smart:start(M_Fun, R_Fun, [], L, ",[]),
    io:format("{processes, 4}).~n",[]),
    io:format("expected output:~n",[]),
    io:format("[100,81,64,49,36,25,16,9,4,1]~n",[]),
@@ -140,7 +142,7 @@
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n",[]),
    io:format(">M_Fun = fun(Chunk)-> [X*X||X<-Chunk] end.~n",[]),
    io:format(">R_Fun = fun(X,Y) -> X++Y end.~n",[]),
-   io:format(">mapred_naive:start(M_Fun, R_Fun, [], L, 2).~n",[]),
+   io:format(">mapred_smart:start(M_Fun, R_Fun, [], L, 2).~n",[]),
    io:format("expected output:~n",[]),
    io:format("same as above~n",[])
 ).
@@ -154,7 +156,7 @@
    io:format("elements in the input list, computes intermediate results ",[]),
    io:format("and sends those to the reduce processes. the final ",[]),
    io:format("results are then collected into a single output.~n ~n",[]),
-   io:format("usage example:~n",[]),
+   io:format("usage example 1:~n",[]),
    io:format(">IndexedFiles = utils:index_file_list(~c<dirpath>~c).~n",[$",$"]),
    io:format(">M_Fun = utils:match_to_file(<regex>).~n",[]),
    io:format(">R_Fun = fun utils:get_unique/3.~n",[]),
@@ -163,7 +165,16 @@
    io:format("{ok, [<filepath(s)-containing-regex>]}~n",[]),
    io:format("NB: <regex> is the erlang atom we are looking for, ",[]),
    io:format("~c<dirpath>~c is the string of the path of the directory ",[$",$"]),
-   io:format("inside of which we are looking.~n")
+   io:format("inside of which we are looking.~n"),
+
+   io:format("usage example 2:~n",[]),
+   io:format(">IndexedFiles = utils:index_file_list(~c<dirpath>~c).~n",[$",$"]),
+   io:format(">M_Fun = fun utils:init_counter/3.~n",[]),
+   io:format(">R_Fun = fun utils:count_words/3.~n",[]),
+   io:format(">dict:to_list(mapred_google:start(M_Fun, R_Fun, ",[]),
+   io:format("IndexedFiles)).~n",[]),
+   io:format("expected output:~n",[]),
+   io:format("a list of tuples of the form {<atom>,[<num-of-occurrences>]}~n")
 ).
 
 -define(STREAM_H,
@@ -236,7 +247,7 @@
    io:format("mean and median times over 12 iterations and the speedups.~n",[]),
    io:format("usage example 2:~n",[]),
    io:format(">test_mapred:benchmark(<schedulers-num>, <exp>, ",[]),
-   io:format("<chunks-length>).~n",[]),
+   io:format("<chunks-length-exp>).~n",[]),
    io:format("expected output:~n",[]),
    io:format("same as above.~n",[])
 ).
@@ -245,7 +256,10 @@
    io:format("--- test_mapred_google description ---~n",[]),
    io:format("testing, profiling and benchmarking for the mapreduce ",[]),
    io:format("data parallel skeletons (google version). ~n",[]),
-   io:format("performs an unix-like grep operation by searching ",[]),
+   io:format("performs a word count, counting atoms located in ",[]),
+   io:format("lists, which are in turn located in the files inside ",[]),
+   io:format("a directory.~n",[]),
+   io:format("it also performs an unix-like grep operation by searching ",[]),
    io:format("an atom ('skepi' by default) inside a directory of files ",[]),
    io:format("containing lists of atoms (located in 'ske-pi/test' by ",[]),
    io:format("default). ~n",[]),
@@ -261,8 +275,8 @@
    io:format("files to be read along with their names; the run-times, the ",[]),
    io:format("mean and median times over 12 iterations and the speedups.~n",[]),
    io:format("usage example 2:~n",[]),
-   io:format(">test_mapred_google:benchmark(<schedulers-num>, ~c<test-", [$"]),
-   io:format("directory>~c).~n",[$"]),
+   io:format(">test_mapred_google:benchmark(<schedulers-num>, ~c<wc-", [$"]),
+   io:format("test-dir>~c, ~c<grep-test-dir>~c).~n",[$",$",$"]),
    io:format("expected output:~n",[]),
    io:format("same as above.~n",[]),
    io:format("usage example 3:~n",[]),
@@ -271,7 +285,7 @@
    io:format("same as above.~n",[]),
    io:format("usage example 4:~n",[]),
    io:format(">test_mapred_google:benchmark(<schedulers-num>, <atom>, ",[]),
-   io:format("~c<test-directory>~c).~n",[$",$"]),
+   io:format("~c<wc-test-dir>~c, ~c<grep-test-dir>~c).~n",[$",$",$",$"]),
    io:format("expected output:~n",[]),
    io:format("same as above.~n",[])
 ).
@@ -310,7 +324,7 @@
    io:format("mean and median times over 12 iterations and the speedups.~n",[]),
    io:format("usage example 2:~n",[]),
    io:format(">test_stream:benchmark(<workers-num>,<schedulers-num>,<exp>,",[]),
-   io:format("<chunks-length>).~n",[]),
+   io:format("<chunks-length-exp>).~n",[]),
    io:format("expected output:~n",[]),
    io:format("same as above.~n",[])
 ).

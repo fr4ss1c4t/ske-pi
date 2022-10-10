@@ -22,7 +22,7 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
    _ <- utils:create_list(Exp)],
 
    io:format("> calculating the function fn=1+(sin(X))^(10*Exp), "),
-   io:format("where EXP=~p and X is a random number from 0 to ~p.~n",
+   io:format("where EXP=~w and X is a random number from 0 to ~w.~n",
       [?EXP,?UPPER]),
    io:format("> testing with ~w scheduler(s) and ~w worker(s)~n",
    [Schedulers_Num,W]),
@@ -50,24 +50,24 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
       || X <- Chunks])
    end,
 
-   Chunks =  utils:make_chunks(Chunks_Len,List),
 
    % sequential version is a farm with only one worker
    Seq =
       fun() ->
-         stream:start_seq(W_Fun, Chunks)
+         stream:start_seq(W_Fun, List, {processes,Schedulers_Num})
       end,
 
    % pipeline version with two stages of farm workers
    Pipe =
       fun() ->
-         stream:start_piped_farm(W, [Fun, fun lists:sum/1], Chunks)
-      end,
+         stream:start_piped_farm(
+            W, [Fun, fun lists:sum/1], List, {processes,Schedulers_Num}
+         ) end,
 
    % farm version
    Farm =
       fun() ->
-         stream:start_farm(W, W_Fun, Chunks)
+         stream:start_farm(W, W_Fun, List, {processes,Schedulers_Num})
       end,
 
    Time_Seq = utils:test_loop(?TIMES,Seq, []),
@@ -85,5 +85,5 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
    utils:report(?SEQ, Time_Seq, Mean_Seq, Median_Seq),
    utils:report(?FARM, Time_Farm, Mean_Farm, Median_Farm),
    utils:report(?PIPED_FARM, Time_Pipe, Mean_Pipe, Median_Pipe),
-   io:format("speedup for the ~p is ~w~n",[?PIPED_FARM,Speedup_Pipe]),
-   io:format("speedup for the ~p is ~w~n", [?FARM,Speedup_Farm]).
+   io:format("speedup for the ~s is ~w~n",[?PIPED_FARM,Speedup_Pipe]),
+   io:format("speedup for the ~s is ~w~n", [?FARM,Speedup_Farm]).

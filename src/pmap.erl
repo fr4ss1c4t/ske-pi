@@ -48,7 +48,7 @@ collect(_,0,_,List) ->
 collect(Pid,N,Tag,List) ->
    receive
       {Tag,Result} -> ?LOG_RCVD(Tag,self(),?NOW),
-         collect(Pid,N-1,Tag,Result++List)
+         collect(Pid,N-1,Tag,lists:append(Result,List))
    after ?TIMEOUT ->
       (?LOG_TIMEOUT(?NOW,?TIMEOUT,Pid)),
       exit(timed_out)

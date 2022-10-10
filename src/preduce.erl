@@ -19,9 +19,9 @@ start(Fun, Combiner, Acc, List, Split) ->
 reduce(Fun, Combiner, List, Split) ->
    ?LOG_CALL(?NOW),
    reduce(Fun, Combiner, List, no_split, Split).
-reduce(Fun, Combiner, List, no_split, SplitTerm) when is_integer(SplitTerm) ->
+reduce(Fun, Combiner, List, no_split, Split) when is_integer(Split) ->
    ?LOG_CALL(?NOW),
-   reduce(Fun, Combiner, List, split, SplitTerm);
+   reduce(Fun, Combiner, List, split, Split);
 reduce(Fun, Combiner, List, no_split, {processes,X}) ->
    ?LOG_CALL(?NOW),
    L = length(List),

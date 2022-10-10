@@ -42,30 +42,43 @@ benchmark(Schedulers_Num, Exp, Chunks_Exp) ->
          X+Sum end),0,lists:map(fun(X)->
             ?COMPUTATION(X,Exp) end,List)) end,
    M_Fun = fun(Chunk) -> [?COMPUTATION(X,Exp) || X<-Chunk] end,
-   M_Fun1 = fun(Chunk) -> lists:sum([?COMPUTATION(X,Exp) || X<-Chunk]) end,
    R_Fun = fun(A,B) -> A+B end,
-   % naive version
+   M_Fun1 = fun(L) -> pmap:start(M_Fun, L) end,
+   R_Fun1 = fun(L) -> preduce:start(R_Fun, 0, L) end,
+   M_Fun2 = fun(Chunk) -> lists:sum([?COMPUTATION(X,Exp) || X<-Chunk]) end,
+
+
+   % combination of pmap and preduce skeleton version
+   C_MapRed = fun() -> catch(R_Fun1(M_Fun1(List))) end,
+
+   % normal version
    N_MapRed = fun() ->
-      mapred_naive:start(M_Fun1, R_Fun, 0, List) end,
+      mapred:start(M_Fun, R_Fun, 0, List) end,
 
    % smart version
    S_MapRed = fun() ->
-      mapred_smart:start(M_Fun, R_Fun, 0, List) end,
+      mapred_smart:start(M_Fun2, R_Fun, 0, List) end,
 
    Time_Seq = utils:test_loop(?TIMES,Seq, []),
    Mean_Seq = utils:mean(Time_Seq),
    Median_Seq = utils:median(Time_Seq),
-   Time_Nv = utils:test_loop(?TIMES,N_MapRed, []),
-   Mean_Nv = utils:mean(Time_Nv),
-   Median_Nv = utils:median(Time_Nv),
+   Time_Cm = utils:test_loop(?TIMES,C_MapRed, []),
+   Mean_Cm = utils:mean(Time_Cm),
+   Median_Cm = utils:median(Time_Cm),
+   Time_Nm = utils:test_loop(?TIMES,N_MapRed, []),
+   Mean_Nm = utils:mean(Time_Nm),
+   Median_Nm = utils:median(Time_Nm),
    Time_Sm = utils:test_loop(?TIMES,S_MapRed, []),
    Mean_Sm = utils:mean(Time_Sm),
    Median_Sm = utils:median(Time_Sm),
-   Speedup_Nv = utils:speedup(Mean_Seq,Mean_Nv),
+   Speedup_Cm = utils:speedup(Mean_Seq,Mean_Cm),
+   Speedup_Nm = utils:speedup(Mean_Seq,Mean_Nm),
    Speedup_Sm = utils:speedup(Mean_Seq,Mean_Sm),
    io:format("---SUMMARY OF RESULTS---~n"),
    utils:report(?SEQ, Time_Seq, Mean_Seq, Median_Seq),
-   utils:report(?NAIVE, Time_Nv, Mean_Nv, Median_Nv),
+   utils:report(?COMB, Time_Cm, Mean_Cm, Median_Cm),
+   utils:report(?MAPRED, Time_Nm, Mean_Nm, Median_Nm),
    utils:report(?SMART, Time_Sm, Mean_Sm, Median_Sm),
-   io:format("speedup of the ~p version is ~p~n", [?NAIVE,Speedup_Nv]),
-   io:format("speedup of the ~p version is ~p~n", [?SMART,Speedup_Sm]).
+   io:format("speedup of the ~s version is ~p~n", [?COMB,Speedup_Cm]),
+   io:format("speedup of the ~s version is ~p~n", [?MAPRED,Speedup_Nm]),
+   io:format("speedup of the ~s version is ~p~n", [?SMART,Speedup_Sm]).
