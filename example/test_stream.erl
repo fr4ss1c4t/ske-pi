@@ -4,7 +4,7 @@
 -export([benchmark/0,benchmark/4, usage/0]).
 
 % testing the pipe and farm skeletons by applying the function
-% fn=1+(sin(X))^(10*Exp), where X is a random number from 0 to an upper bound
+% fn=1+(sin(X))^(100*Exp), where X is a random number from 0 to an upper bound
 
 usage() ->
    ?TEST_STREAM_H.
@@ -12,18 +12,17 @@ usage() ->
 % default configuration
 benchmark() ->
    Schedulers_Num = utils:get_schedulers(),
-   Chunks_Exp = ?EXP-round(math:log2(Schedulers_Num)),
-   benchmark(Schedulers_Num,Schedulers_Num, ?EXP,Chunks_Exp).
+   Chunks_Exp = 12-round(math:log2(Schedulers_Num)),
+   benchmark(Schedulers_Num,Schedulers_Num, 12, Chunks_Exp).
 % customise number of schedulers online, number of workers, length of list and
 % length of chunks
-benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
-   utils:set_schedulers(Schedulers_Num),
+benchmark(W, Schedulers_Num, Exp,Chunks_Exp) ->
    List = [rand:uniform(?UPPER)||
    _ <- utils:create_list(Exp)],
 
-   io:format("> calculating the function fn=1+(sin(X))^(10*Exp), "),
+   io:format("> calculating the function fn=1+(sin(X))^(100*Exp), "),
    io:format("where EXP=~w and X is a random number from 0 to ~w.~n",
-      [?EXP,?UPPER]),
+      [Exp,?UPPER]),
    io:format("> testing with ~w scheduler(s) and ~w worker(s)~n",
    [Schedulers_Num,W]),
    io:format("> the list is 2^~w=~w elements long.~n",[Exp,length(List)]),
@@ -52,22 +51,25 @@ benchmark(W, Schedulers_Num, Exp, Chunks_Exp) ->
 
 
    % sequential version is a farm with only one worker
+   utils:set_schedulers(1),
    Seq =
       fun() ->
-         stream:start_seq(W_Fun, List, {processes,Schedulers_Num})
+         stream:start_seq(W_Fun, List, Chunks_Len)
       end,
+   utils:set_schedulers(Schedulers_Num),
 
    % pipeline version with two stages of farm workers
    Pipe =
       fun() ->
-         stream:start_piped_farm(
-            W, [Fun, fun lists:sum/1], List, {processes,Schedulers_Num}
-         ) end,
+         lists:append(
+            stream:start_piped_farm(W, [Fun,
+            fun(Chunk)-> [lists:sum(X)|| X<-Chunk] end], List, Chunks_Len))
+      end,
 
    % farm version
    Farm =
       fun() ->
-         stream:start_farm(W, W_Fun, List, {processes,Schedulers_Num})
+         stream:start_farm(W, W_Fun, List, Chunks_Len)
       end,
 
    Time_Seq = utils:test_loop(?TIMES,Seq, []),

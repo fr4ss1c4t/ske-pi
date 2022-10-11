@@ -119,8 +119,8 @@ par_wc(Dirpath) ->
       fun count_words/3, Indexed))}.
 
 % sequential word counting example: it reads each file inside Dirpath and
-% for each file its list of atoms is extraced. For each atom in the list of
-% of atoms, a word count will be performed.
+% for each file its list of atoms is extracted. Each atom in the list of
+% of atoms is counted.
 seq_wc(Dirpath) ->
    {ok, Files} = file:list_dir(Dirpath),
    Filepaths = [filename:join(Dirpath, File) || File <- Files],
@@ -128,10 +128,9 @@ seq_wc(Dirpath) ->
       lists:flatten(
          lists:map(fun(File) ->
             element(2,file:consult(File)) end, Filepaths)),
-   {ok, lists:map(fun(K) ->
-      {K, utils:count(K, Atoms_List)}
-   end, sets:to_list(sets:from_list(Atoms_List)))}.
-
+	Dict = lists:foldl(fun(Atom, Dict1) ->
+      dict:update_counter(Atom, 1, Dict1) end, dict:new(), Atoms_List),
+	{ok,dict:to_list(Dict)}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

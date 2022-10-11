@@ -13,13 +13,15 @@ usage() ->
    ?TEST_MR_GOOGLE_H.
 
 benchmark() ->
-   % ?TESTDIR_ are default folders containing files, used for testing purposes,
-   % and '?REGEX' is the atom to be searched in ?TESTDIR_GREP
-   benchmark(utils:get_schedulers(), ?REGEX, ?TESTDIR_WC, ?TESTDIR_GREP).
-benchmark(Schedulers_Num, Atom) ->
-   benchmark(Schedulers_Num, Atom, ?TESTDIR_WC, ?TESTDIR_GREP).
-benchmark(Schedulers_Num, Testdir_WC, Testdir_Grep) ->
-   benchmark(Schedulers_Num, ?REGEX, Testdir_WC, Testdir_Grep).
+   % ?TESTDIR is a default folder containing files, used for testing purposes,
+   % and '?REGEX' is the atom to be searched in ?TESTDIR
+   benchmark(utils:get_schedulers(), ?REGEX, ?TESTDIR).
+benchmark(Schedulers_Num, Atom) when is_atom(Atom) ->
+   benchmark(Schedulers_Num, Atom, ?TESTDIR);
+benchmark(Schedulers_Num, Testdir) ->
+   benchmark(Schedulers_Num, ?REGEX, Testdir).
+benchmark(Schedulers_Num, Atom, Testdir) ->
+   benchmark(Schedulers_Num, Atom, Testdir, Testdir).
 benchmark(Schedulers_Num, Atom, Testdir_WC, Testdir_Grep)->
    utils:set_schedulers(Schedulers_Num),
    Abspath_Grep = filename:join(utils:get_dirpath(),Testdir_Grep),

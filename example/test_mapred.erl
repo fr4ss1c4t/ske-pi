@@ -4,7 +4,7 @@
 -export([benchmark/0,benchmark/3, usage/0]).
 
 % testing the mapreduce skeleton by applying the function
-% fn=1+(sin(X))^(10*Exp), where X is a random number from 0 to an upper bound
+% fn=1+(sin(X))^(100*Exp), where X is a random number from 0 to an upper bound
 
 usage() ->
    ?TEST_MR_H.
@@ -18,7 +18,7 @@ benchmark(Schedulers_Num, Exp, Chunks_Exp) ->
    utils:set_schedulers(Schedulers_Num),
    List = [rand:uniform(?UPPER)|| _ <- utils:create_list(Exp)],
 
-   io:format("> calculating the function fn=1+(sin(X))^(10*Exp), "),
+   io:format("> calculating the function fn=1+(sin(X))^(100*Exp), "),
    io:format("where EXP=~p and X is a random number from 0 to ~p.~n",
       [?EXP,?UPPER]),
    io:format("> testing with ~w scheduler(s).~n", [Schedulers_Num]),

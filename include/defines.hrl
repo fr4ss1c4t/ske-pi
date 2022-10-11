@@ -1,5 +1,5 @@
 % function f(X,Exp)=1+(sin(X))^(10*Exp), to be used in tests
--define(COMPUTATION(X,Exp), (1 + math:pow(math:sin(X),Exp*10))).
+-define(COMPUTATION(X,Exp), (1 + math:pow(math:sin(X),Exp*100))).
 
 % this is to define an exponent, usually used list lengths (eg. the list
 % will be 2^EXP elements long)
@@ -20,9 +20,8 @@
 % the default atom, to be searched in the google mapreduce tests
 -define(REGEX, (skepi)).
 
-% the default directories, to be used in the google mapreduce tests
--define(TESTDIR_GREP, ("test_grep")).
--define(TESTDIR_WC, ("test_wc")).
+% the default directory, to be used in the google mapreduce tests
+-define(TESTDIR, ("test_wc")).
 
 % time and date, to be used in debug mode showing inter-process communication
 -define(NOW, (utils:print_time())).

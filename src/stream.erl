@@ -3,12 +3,10 @@
 -include("include/defines.hrl").
 -compile(nowarn_unused_vars).
 -export([usage/0,
-start_farm/2,
-start_seq/2,
-start_pipe/2,
-start_piped_farm/2,
+start_farm/3,
 start_seq/3,
 start_pipe/3,
+start_piped_farm/3,
 start_farm/4,
 start_piped_farm/4]).
 
@@ -17,92 +15,41 @@ usage() -> ?STREAM_H.
 % some functions to be used in the testing module for starting farms
 % of W workers, pipes with a list of stages and a sequential function
 % operating on a stream of inputs, respectively.
-start_farm(W_Fun,List) ->
+start_farm(W_Fun,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
    W = erlang:system_info(schedulers_online),
-   start_farm(W,W_Fun,List,{processes,utils:get_schedulers()}).
-start_farm(W,W_Fun,List,Split) when is_integer(Split)->
+   start_farm(W,W_Fun,List,Chunks_Len).
+start_farm(W,W_Fun,List,Chunks_Len)->
    ?LOG_CALL(?NOW),
-   Chunks = utils:make_chunks(Split, List),
-   start(self(),[{farm, [{seq,W_Fun}], W}], Chunks);
-start_farm(W,W_Fun,List,{processes,X}=Split)->
-   ?LOG_CALL(?NOW),
-   L = length(List),
-   case L rem X of
-      0 ->
-         Chunks = utils:make_chunks(L div X, List);
-      _ ->
-         Chunks = utils:make_chunks(L div X + 1, List)
-   end,
-   start(self(),[{farm, [{seq,W_Fun}], W}], Chunks).
+   start(self(),[{farm, [{seq,W_Fun}], W}], List,Chunks_Len).
 
-start_pipe(Stages,List) ->
-   start_pipe(Stages,List,{processes,utils:get_schedulers()}).
-start_pipe(Stages,List,Split) when is_integer(Split) ->
+
+start_pipe(Stages,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   Chunks = utils:make_chunks(Split,List),
    start(self(),lists:map(fun(Fun)->
       {seq,Fun}
-   end, Stages), Chunks);
-start_pipe(Stages,List,{processes,X}=Split) ->
-   ?LOG_CALL(?NOW),
-   L = length(List),
-   case L rem X of
-      0 ->
-         Chunks = utils:make_chunks(L div X, List);
-      _ ->
-         Chunks = utils:make_chunks(L div X + 1, List)
-   end,
-   start(self(),lists:map(fun(Fun)->
-      {seq,Fun}
-   end, Stages), Chunks).
+   end, Stages), List,Chunks_Len).
 
-start_piped_farm(Stages,List) ->
+start_piped_farm(Stages,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
    W = utils:get_schedulers(),
-   start_piped_farm(W,Stages,List,{processes,utils:get_schedulers()}).
+   start_piped_farm(W,Stages,List,Chunks_Len).
 
-start_piped_farm(W,Stages,List,Split) when is_integer(Split) ->
+start_piped_farm(W,Stages,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   Chunks = utils:make_chunks(Split,List),
    start(self(),lists:map(fun(Fun)->
       {farm, [{seq,Fun}], W}
-   end, Stages), Chunks);
-start_piped_farm(W,Stages,List,{processes,X}=Split) ->
-   ?LOG_CALL(?NOW),
-   L = length(List),
-   case L rem X of
-      0 ->
-         Chunks = utils:make_chunks(L div X, List);
-      _ ->
-         Chunks = utils:make_chunks(L div X + 1, List)
-   end,
-   start(self(),lists:map(fun(Fun)->
-      {farm, [{seq,Fun}], W}
-   end, Stages), Chunks).
+   end, Stages), List,Chunks_Len).
 
-start_seq(W_Fun, List) ->
+start_seq(W_Fun, List, Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   start_seq(W_Fun, List, {processes,utils:get_schedulers()}).
-start_seq(W_Fun, List, Split) when is_integer(Split) ->
-   ?LOG_CALL(?NOW),
-   start(self(),[{seq,W_Fun}],utils:make_chunks(Split,List));
-start_seq(W_Fun, List, {processes,X}=Split) ->
-   ?LOG_CALL(?NOW),
-   L = length(List),
-   case L rem X of
-      0 ->
-         Chunks = utils:make_chunks(L div X, List);
-      _ ->
-         Chunks = utils:make_chunks(L div X + 1, List)
-   end,
-   start(self(),[{seq,W_Fun}],Chunks).
+   start(self(),[{seq,W_Fun}],utils:make_chunks(Chunks_Len,List),Chunks_Len).
 
 % returns the received results given the input stream and the
 % tasks
-start(Pid,Tasks, List) ->
+start(Pid,Tasks, List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   run(Tasks,List),
+   run(Tasks,List,Chunks_Len),
    ?LOG_RCVD(self(),Pid,?NOW),
    receive
       {results,Results} -> Results
@@ -112,15 +59,15 @@ start(Pid,Tasks, List) ->
    end.
 
 % runs the tasks in the workflow given the input stream
-run(Tasks,List) when is_pid(Tasks)->
+run(Tasks,List,Chunks_Len) when is_pid(Tasks)->
    ?LOG_CALL(?NOW),
    Bucket = spawn_drain(List),
    Bucket(Tasks);
-run(Tasks,List) when is_list(Tasks) ->
+run(Tasks,List,Chunks_Len) when is_list(Tasks) ->
    ?LOG_CALL(?NOW),
    Bucket = (spawn_sink())(self()),
-   Parsed_Workflow = build(Tasks,Bucket),
-   run(Parsed_Workflow,List).
+   Parsed_Workflow = build(Tasks,Bucket,Chunks_Len),
+   run(Parsed_Workflow,List,Chunks_Len).
 
 run_seq(Seq_Fun,Pid) ->
    ?LOG_CALL(?NOW),
@@ -128,37 +75,37 @@ run_seq(Seq_Fun,Pid) ->
    loop_fun(Fun,Pid).
 
 % parses the tasks
-build(Tasks,Bucket) ->
+build(Tasks,Bucket,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   Funs = [parse(Task) || Task <-Tasks],
+   Funs = [parse(Task,Chunks_Len) || Task <-Tasks],
    lists:foldr(fun(Fun,Pid)-> catch(Fun(Pid)) end, Bucket, Funs).
 
-parse(Fun) when is_function(Fun,1)->
+parse(Fun,Chunks_Len) when is_function(Fun,1)->
    ?LOG_CALL(?NOW),
-   parse({seq,Fun});
-parse({seq,Fun}) when is_function(Fun,1)->
+   parse({seq,Fun},Chunks_Len);
+parse({seq,Fun},Chunks_Len) when is_function(Fun,1)->
    ?LOG_CALL(?NOW),
    build_seq(Fun);
-parse({farm,Tasks,W}) ->
+parse({farm,Tasks,W},Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   build_farm(W,Tasks);
-parse({pipe,Tasks}) ->
+   build_farm(W,Tasks,Chunks_Len);
+parse({pipe,Tasks},Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   build_pipe(Tasks).
+   build_pipe(Tasks,Chunks_Len).
 
 % farm paradigm using a collector and an emitter
-build_farm(W,Tasks) ->
+build_farm(W,Tasks,Chunks_Len) ->
    ?LOG_CALL(?NOW),
    fun(Pid) ->
       Collector = spawn(fun() -> collect(W,Pid) end),
-      Workers = spawn_procs(W,Tasks,Collector),
-      spawn(fun() -> emit(Workers) end)
+      Workers = spawn_procs(W,Tasks,Collector,Chunks_Len),
+      spawn(fun() -> emit(Pid, Workers, [], 0, Chunks_Len) end)
    end.
 
-build_pipe(Tasks) ->
+build_pipe(Tasks,Chunks_Len) ->
    ?LOG_CALL(?NOW),
    fun(Pid) ->
-      build(Tasks,Pid)
+      build(Tasks,Pid,Chunks_Len)
    end.
 
 build_seq(Fun) ->
@@ -182,23 +129,34 @@ loop_fun(Fun,Pid) ->
          eos
    end.
 
-emit([Worker|Rest]=Workers) ->
+emit(Parent,[Worker|Rest]=Workers, Chunk, Chunks_Len, Chunks_Len_Max) ->
    ?LOG_CALL(?NOW),
-   ?LOG_RCVD(self(),Worker,?NOW),
+   ?LOG_RCVD(self(),Parent,?NOW),
    receive
-      {input,_} = Input ->
-         Worker ! Input,
-         ?LOG_SENT(self(),Worker,?NOW),
-         emit(Rest++[Worker]);
+      {input,Item}  ->
+         case Chunks_Len+1 == Chunks_Len_Max of
+            true ->
+               ?LOG_SENT(Worker,self(),?NOW),
+               Worker ! {input,[Item|Chunk]},
+               emit(Parent,lists:append(Rest,[Worker]),[],0, Chunks_Len_Max);
+            false ->
+               emit(Parent,Workers, [Item|Chunk], Chunks_Len+1, Chunks_Len_Max)
+         end;
       {msg, eos} ->
-         stop_procs(Workers)
+         case Chunk == [] of
+            true -> stop_procs(Workers);
+            false ->
+               ?LOG_SENT(Worker,self(),?NOW),
+               Worker ! {input,Chunk},
+               stop_procs(Workers)
+         end
    end.
 
 collect(W,Pid) ->
    ?LOG_CALL(?NOW),
    ?LOG_RCVD(self(),Pid,?NOW),
    receive
-      {input, _} = Input ->
+      {input, Chunk} = Input ->
          Pid ! Input,
          ?LOG_SENT(self(),Pid,?NOW),
          collect(W,Pid);
@@ -246,16 +204,16 @@ loop_sink(Pid,Results) ->
    end.
 
 % spawning processes
-spawn_procs(W,Tasks,Pid) ->
+spawn_procs(W,Tasks,Pid,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   spawn_procs(W,Tasks,Pid,[]).
-spawn_procs(W,_Tasks,_Pid,Workers) when W <1 ->
+   spawn_procs(W,Tasks,Pid,[],Chunks_Len).
+spawn_procs(W,_Tasks,_Pid,Workers,Chunks_Len) when W <1 ->
    ?LOG_CALL(?NOW),
    Workers;
-spawn_procs(W,Tasks,Pid,Workers) ->
+spawn_procs(W,Tasks,Pid,Workers,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   Worker = do_job(Tasks,Pid),
-   spawn_procs(W-1,Tasks,Pid,[Worker|Workers]).
+   Worker = do_job(Tasks,Pid,Chunks_Len),
+   spawn_procs(W-1,Tasks,Pid,[Worker|Workers],Chunks_Len).
 
 % stopping process by sending an 'eos' signal
 stop_procs([]) ->
@@ -266,6 +224,6 @@ stop_procs([Worker|Rest])->
    ?LOG_SENT(Worker,self(),?NOW),
    stop_procs(Rest).
 
-do_job(Tasks,Pid) ->
+do_job(Tasks,Pid,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   build(Tasks,Pid).
+   build(Tasks,Pid,Chunks_Len).
