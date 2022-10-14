@@ -44,21 +44,22 @@
    io:format("each chunk is reduced and its output is processed by a "),
    io:format("logical tree of combiners running in parallel, combining "),
    io:format("all results to give a final output.~n~n"),
-   io:format("usage example:~n"),
+   io:format("usage example 1:~n"),
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n"),
    io:format(">preduce:start(fun(A,B) -> A+B  end, 0, L).~n"),
    io:format("expected output:~n"),
    io:format("55~n"),
-   io:format("usage example:~n"),
+   io:format("usage example 2:~n"),
    io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n"),
    io:format(">preduce:start(fun(A,B) -> A+B  end, 0, L, 3).~n"),
    io:format("expected output:~n"),
    io:format("same as above~n"),
-   io:format("usage example:~n"),
-   io:format(">L = [1,2,3,4,5,6,7,8,9,10].~n"),
-   io:format(">preduce:start(fun(A,B) -> A+B  end, 0, L, {processes,4}).~n"),
+   io:format("usage example 3:~n"),
+   io:format(">L = [[1,2],[4,5,6],[3],[7,8,9,10]].~n"),
+   io:format(">preduce:start(fun(A,B) -> [lists:sum(A)]++[lists:sum(B)] "),
+   io:format(" end, [], L, {processes,2}).~n"),
    io:format("expected output:~n"),
-   io:format("same as above~n")
+   io:format("[18,37]~n")
 ).
 
 
@@ -189,7 +190,7 @@
    io:format("usage example:~n"),
    io:format(">L = [15,2,7,12,5,9,14,1,3,10,6,8,13,4,0,11].~n"),
    io:format(">W_Fun = fun(Chunk) -> lists:sum([X*X||X<-Chunk]) end.~n"),
-   io:format(">stream:start_farm(W_Fun, L).~n"),
+   io:format(">stream:start_farm(W_Fun, L, 4).~n"),
    io:format("expected output:~n"),
    io:format("[422,303,209,306]~n~n"),
 
@@ -199,13 +200,13 @@
    io:format("the output of one stage is the input of the next one.~n~n"),
    io:format("usage example:~n"),
    io:format(">L = [15,2,7,12,5,9,14,1,3,10,6,8,13,4,0,11].~n"),
-   io:format(">Stage_One = fun(X) -> X+10 end.~n"),
-   io:format(">Stage_Two = fun(X) -> X*X end.~n"),
+   io:format(">Stage_One = fun(Chunk) -> [X+10||X<-Chunk] end.~n"),
+   io:format(">Stage_Two = fun(Chunk) -> [X*X||X<-Chunk] end.~n"),
    io:format(">Stages = [Stage_One, Stage_Two].~n"),
    io:format(">stream:start_pipe(Stages, L).~n"),
    io:format("expected output:~n"),
-   io:format("[625,144,289,484,225,361,576,121,169,400,256,324,"),
-   io:format("529,196,100,441]~n~n"),
+   io:format("[625,144,289,484,225,361,576,121,169"),
+   io:format(",400,256,324,529,196,100,441]~n~n"),
 
    io:format("--- stream pipe of farms description ---~n"),
    io:format("takes the number of worker processes (optional), "),
@@ -218,9 +219,9 @@
    io:format(">Stage_One = fun(Chunk) -> [X*X|| X<-Chunk] end.~n"),
    io:format(">Stage_Two = fun(Chunk)-> [lists:sum(X)|| X<-Chunk] end.~n"),
    io:format(">Stages = [Stage_One, Stage_Two].~n"),
-   io:format(">stream:start_piped_farm(4, Stages, L).~n"),
+   io:format(">stream:start_piped_farm(4, Stages, L, 2).~n"),
    io:format("expected output:~n"),
-   io:format("[[306,209,303,422]]~n")
+   io:format("[109,229,100,193,106,197,185,121]~n")
 ).
 
 

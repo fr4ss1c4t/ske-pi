@@ -51,19 +51,16 @@ benchmark(W, Schedulers_Num, Exp,Chunks_Exp) ->
 
 
    % sequential version is a farm with only one worker
-   utils:set_schedulers(1),
    Seq =
       fun() ->
          stream:start_seq(W_Fun, List, Chunks_Len)
       end,
-   utils:set_schedulers(Schedulers_Num),
 
    % pipeline version with two stages of farm workers
    Pipe =
       fun() ->
-         lists:append(
-            stream:start_piped_farm(W, [Fun,
-            fun(Chunk)-> [lists:sum(X)|| X<-Chunk] end], List, Chunks_Len))
+         stream:start_piped_farm(W, [Fun,
+            fun(Chunk)-> [lists:sum(X)|| X<-Chunk] end], List, Chunks_Len)
       end,
 
    % farm version

@@ -42,6 +42,7 @@ start(M_Fun, R_Fun, Combiner, Acc, List, {processes, X}=Split) ->
    start(M_Fun, R_Fun, Combiner, Acc, {chunked,Chunks}, Split).
 
 reduce(Parent, Tag, M_Fun, R_Fun, Combiner, Acc, List) ->
+   ?LOG_CALL(?NOW),
    Pid = self(),
    spawn_procs(Pid, Tag, M_Fun, List),
    R = length(List),

@@ -3,11 +3,17 @@
 -include("include/defines.hrl").
 -compile(nowarn_unused_vars).
 -export([usage/0,
+start_farm/2,
 start_farm/3,
-start_seq/3,
-start_pipe/3,
-start_piped_farm/3,
 start_farm/4,
+start/3,
+start/4,
+start_seq/2,
+start_seq/3,
+start_pipe/2,
+start_pipe/3,
+start_piped_farm/2,
+start_piped_farm/3,
 start_piped_farm/4]).
 
 usage() -> ?STREAM_H.
@@ -15,6 +21,13 @@ usage() -> ?STREAM_H.
 % some functions to be used in the testing module for starting farms
 % of W workers, pipes with a list of stages and a sequential function
 % operating on a stream of inputs, respectively.
+start_farm(W_Fun,List) ->
+   ?LOG_CALL(?NOW),
+   W = erlang:system_info(schedulers_online),
+   start_farm(W,W_Fun,List,1).
+start_farm(W,W_Fun,List) when is_integer(W)->
+   ?LOG_CALL(?NOW),
+   start_farm(W,W_Fun,List,1);
 start_farm(W_Fun,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
    W = erlang:system_info(schedulers_online),
@@ -23,30 +36,44 @@ start_farm(W,W_Fun,List,Chunks_Len)->
    ?LOG_CALL(?NOW),
    start(self(),[{farm, [{seq,W_Fun}], W}], List,Chunks_Len).
 
-
+start_pipe(Stages,List) ->
+   ?LOG_CALL(?NOW),
+   start_pipe(Stages,List,1).
 start_pipe(Stages,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   start(self(),lists:map(fun(Fun)->
+   lists:append(start(self(),lists:map(fun(Fun)->
       {seq,Fun}
-   end, Stages), List,Chunks_Len).
+   end, Stages), utils:make_chunks(Chunks_Len,List),Chunks_Len)).
 
-start_piped_farm(Stages,List,Chunks_Len) ->
+start_piped_farm(Stages,List) ->
    ?LOG_CALL(?NOW),
    W = utils:get_schedulers(),
-   start_piped_farm(W,Stages,List,Chunks_Len).
-
+   start_piped_farm(W,Stages,List,1).
+start_piped_farm(Stages,List,Chunks_Len) when is_list(Stages)->
+   ?LOG_CALL(?NOW),
+   W = utils:get_schedulers(),
+   start_piped_farm(W,Stages,List,Chunks_Len);
+start_piped_farm(W,Stages,List) ->
+   ?LOG_CALL(?NOW),
+   start_piped_farm(W,Stages,List,1).
 start_piped_farm(W,Stages,List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
-   start(self(),lists:map(fun(Fun)->
+   lists:append(start(self(),lists:map(fun(Fun)->
       {farm, [{seq,Fun}], W}
-   end, Stages), List,Chunks_Len).
+   end, Stages), List,Chunks_Len)).
 
+start_seq(W_Fun, List) ->
+   ?LOG_CALL(?NOW),
+   start(self(),[{seq,W_Fun}],utils:make_chunks(1,List),1).
 start_seq(W_Fun, List, Chunks_Len) ->
    ?LOG_CALL(?NOW),
    start(self(),[{seq,W_Fun}],utils:make_chunks(Chunks_Len,List),Chunks_Len).
 
 % returns the received results given the input stream and the
 % tasks
+start(Pid,Tasks, List) ->
+   ?LOG_CALL(?NOW),
+   start(Pid,Tasks, List,1).
 start(Pid,Tasks, List,Chunks_Len) ->
    ?LOG_CALL(?NOW),
    run(Tasks,List,Chunks_Len),
